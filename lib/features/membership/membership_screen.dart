@@ -13,12 +13,19 @@ class _MembershipScreenState extends State<MembershipScreen> {
   int _currentPage = 0;
   bool _showContact = false;
 
+  // Color constants (in case AppTheme doesn't have them)
+  static const Color coral = Color(0xFFFF6B6B);
+  static const Color grayText = Color(0xFF9E9E9E);
+  static const Color creamBackground = Color(0xFFFDF8F3);
+  static const Color darkText = Color(0xFF2D2D2D);
+  static const Color secondaryText = Color(0xFF757575);
+
   // Membership data
   final List<Map<String, dynamic>> memberships = [
     {
       'title': 'Full Membership',
       'emoji': '🚀',
-      'color': AppTheme.coral,
+      'color': coral,
       'price': '2,95',
       'shortDesc': 'Ultimate flexibility and freedom',
       'fullDesc': '''For parents who want the ultimate flexibility and the freedom to work whenever inspiration (or deadlines) call.
@@ -159,7 +166,7 @@ Try NEST for a day and see what's possible.'''
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.creamBackground,
+                  color: creamBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -214,7 +221,7 @@ Try NEST for a day and see what's possible.'''
                     onChanged: (value) {
                       // TODO: Implement checkbox state
                     },
-                    activeColor: AppTheme.coral,
+                    activeColor: coral,
                   ),
                   Expanded(
                     child: GestureDetector(
@@ -273,7 +280,7 @@ Try NEST for a day and see what's possible.'''
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: selected ? AppTheme.coral : AppTheme.grayText.withOpacity(0.3),
+          color: selected ? coral : grayText.withOpacity(0.3),
           width: selected ? 2 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -282,13 +289,13 @@ Try NEST for a day and see what's possible.'''
         children: [
           Icon(
             selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-            color: selected ? AppTheme.coral : AppTheme.grayText,
+            color: selected ? coral : grayText,
           ),
           const SizedBox(width: 12),
           Text(
             title,
             style: TextStyle(
-              color: selected ? AppTheme.darkText : AppTheme.secondaryText,
+              color: selected ? darkText : secondaryText,
               fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -372,7 +379,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                         Text(
                           content['subtitle'],
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.coral,
+                                color: coral,
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
@@ -410,7 +417,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                     // TODO: Implement scroll to contact
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.coral,
+                    backgroundColor: coral,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -436,7 +443,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.creamBackground,
+      backgroundColor: creamBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -451,7 +458,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: AppTheme.coral,
+                        color: coral,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Center(
@@ -479,7 +486,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                     Text(
                       'Find the perfect fit for your family',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppTheme.secondaryText,
+                            color: secondaryText,
                           ),
                       textAlign: TextAlign.center,
                     ),
@@ -520,8 +527,8 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                     height: 8,
                     decoration: BoxDecoration(
                       color: _currentPage == index
-                          ? AppTheme.coral
-                          : AppTheme.grayText.withOpacity(0.3),
+                          ? coral
+                          : grayText.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -545,7 +552,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                     Text(
                       'Custom packages for companies and relocating families',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.secondaryText,
+                            color: secondaryText,
                           ),
                     ),
                     const SizedBox(height: 20),
@@ -595,13 +602,13 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppTheme.coral.withOpacity(0.2),
+                          color: coral.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.person,
                           size: 40,
-                          color: AppTheme.coral,
+                          color: coral,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -635,7 +642,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                               ),
                               label: Text(_showContact ? 'Hide Contact' : 'Contact Me'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.coral,
+                                backgroundColor: coral,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -661,17 +668,17 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.coral.withOpacity(0.1),
+                      color: coral.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppTheme.coral.withOpacity(0.3),
+                        color: coral.withOpacity(0.3),
                       ),
                     ),
                     child: Column(
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.email, color: AppTheme.coral, size: 20),
+                            const Icon(Icons.email, color: coral, size: 20),
                             const SizedBox(width: 12),
                             Text(
                               'membership@nest-hamburg.de',
@@ -682,7 +689,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(Icons.phone, color: AppTheme.coral, size: 20),
+                            const Icon(Icons.phone, color: coral, size: 20),
                             const SizedBox(width: 12),
                             Text(
                               '+49 40 1234 5678',
@@ -840,7 +847,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                     'From ${membership['price']} € / hour',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.darkText,
+                          color: darkText,
                         ),
                   ),
                   const SizedBox(height: 8),
@@ -896,7 +903,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.grayText.withOpacity(0.2)),
+          border: Border.all(color: grayText.withOpacity(0.2)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -926,7 +933,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.coral,
+                          color: coral,
                         ),
                   ),
                 ],
@@ -935,7 +942,7 @@ This is not just childcare. It's a soft-landing package for global hires.''',
             const Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: AppTheme.grayText,
+              color: grayText,
             ),
           ],
         ),
@@ -943,5 +950,4 @@ This is not just childcare. It's a soft-landing package for global hires.''',
     );
   }
 }
-
 
