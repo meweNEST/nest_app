@@ -1,8 +1,6 @@
-// --- Code für die neue Datei: lib/screens/update_password_screen.dart ---
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'login_screen.dart'; // Wir brauchen das für die Navigation danach
+import '../features/auth/login_screen.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -21,6 +19,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
   Future<void> _updatePassword() async {
     if (!_formKey.currentState!.validate() || !mounted) return;
+
     setState(() => _isLoading = true);
 
     try {
@@ -28,18 +27,12 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
         UserAttributes(password: _passwordController.text.trim()),
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password updated successfully! Please log in.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-        );
-      }
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+      );
     } on AuthException catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,50 +52,47 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set New Password'),
-      ),
+      appBar: AppBar(title: const Text('Set New Password')),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
                 'Please enter your new password below.',
-                style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _passwordController,
                 decoration: const InputDecoration(labelText: 'New Password'),
                 obscureText: true,
-                validator: (v) => (v == null || v.length < 6)
-                    ? 'Password must be at least 6 characters'
-                    : null,
+                validator: (v) =>
+                (v == null || v.length < 6) ? 'Password too short' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
-                decoration: const InputDecoration(labelText: 'Confirm New Password'),
+                decoration:
+                const InputDecoration(labelText: 'Confirm Password'),
                 obscureText: true,
-                validator: (v) => v != _passwordController.text
-                    ? 'Passwords do not match'
-                    : null,
+                validator: (v) =>
+                v != _passwordController.text ? 'Passwords do not match' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _updatePassword,
                 child: _isLoading
                     ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 3))
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                )
                     : const Text('Update Password'),
-              ),
+              )
             ],
           ),
         ),
