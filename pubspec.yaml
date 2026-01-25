@@ -11,7 +11,9 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.12.0
+  intl: ^0.18.1 # Füge diese Zeile hinzu
   flutter_dotenv: ^6.0.0
+  table_calendar: ^3.0.9
 
 dev_dependencies:
   flutter_test:
@@ -20,5 +22,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
   assets:
+    - assets/images/
+    - assets/images/onboarding_1.png
+    - assets/images/onboarding_2.png
+    - assets/images/onboarding_3.png
+    - assets/images/onboarding_4.png
+    - assets/images/onboarding_5.png
+    - assets/images/nest_logo.png
     - .env
+
