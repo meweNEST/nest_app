@@ -1,0 +1,2511 @@
+================================================================================
+PROJECT SUMMARY FOR LLM UNDERSTANDING
+================================================================================
+
+## PROJECT OVERVIEW
+
+README Preview:
+# nest_app
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+
+App Name: nest_app
+Key Dependencies: flutter, sdk, cupertino_icons, supabase_flutter, flutter_dotenv
+
+## FILE STATISTICS
+
+  .dart: 17 files
+  .xml: 7 files
+  .swift: 6 files
+  .json: 4 files
+  .yaml: 2 files
+  .md: 2 files
+  .py: 1 files
+  .kt: 1 files
+
+## PROJECT STRUCTURE BY PURPOSE
+
+### CONFIG (1 files)
+
+  📄 lib/core/config/supabase_config.dart
+     Classes: SupabaseConfig
+
+### UI (11 files)
+
+  📄 lib/features/about/about_screen.dart
+     Widgets: AboutScreen
+     Classes: AboutScreen extends StatelessWidget
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart
+
+  📄 lib/features/cafe/cafe_screen.dart
+     Widgets: CafeScreen
+     Classes: CafeScreen extends StatelessWidget
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart
+
+  📄 lib/features/home/home_screen.dart
+     Widgets: HomeScreen
+     Classes: HomeScreen extends StatelessWidget
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart
+
+  📄 lib/features/login/login_screen.dart
+     Widgets: LoginScreen
+     Classes: LoginScreen extends StatefulWidget, _LoginScreenState extends State
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart, ../main/main_screen.dart
+
+  📄 lib/features/main/main_screen.dart
+     Widgets: MainScreen
+     Classes: MainScreen extends StatefulWidget, _MainScreenState extends State
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart, ../home/home_screen.dart
+
+  📄 lib/features/onboarding/onboarding_screen.dart
+     Widgets: OnboardingScreen
+     Classes: OnboardingScreen extends StatelessWidget
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart, ../login/login_screen.dart
+
+  📄 lib/features/profile/profile_screen.dart
+     Widgets: ProfileScreen
+     Classes: ProfileScreen extends StatelessWidget
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart
+
+  📄 lib/features/schedule/schedule_screen.dart
+     Widgets: ScheduleScreen
+     Classes: ScheduleScreen extends StatelessWidget
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart
+
+  📄 lib/features/splash/splash_screen.dart
+     Widgets: SplashScreen
+     Classes: SplashScreen extends StatefulWidget, _SplashScreenState extends State
+     Key imports: package:flutter/material.dart, ../../core/theme/app_theme.dart, ../onboarding/onboarding_screen.dart
+
+  📄 lib/screens/login_screen.dart
+     Widgets: LoginScreen, SignUpDialog, ForgotPasswordDialog, HomeScreen
+     Classes: LoginScreen extends StatefulWidget, _LoginScreenState extends State, SignUpDialog extends StatefulWidget
+     Key imports: package:flutter/gestures.dart, package:flutter/material.dart, package:supabase_flutter/supabase_flutter.dart
+
+  📄 lib/screens/update_password_screen.dart
+     Widgets: UpdatePasswordScreen
+     Classes: UpdatePasswordScreen extends StatefulWidget, _UpdatePasswordScreenState extends State
+     Key imports: package:flutter/material.dart, package:supabase_flutter/supabase_flutter.dart, login_screen.dart
+
+### TEST (5 files)
+
+  📄 ios/RunnerTests/RunnerTests.swift
+
+  📄 lib/screens/supabase_test_screen.dart
+     Widgets: SupabaseTestScreen
+     Classes: SupabaseTestScreen extends StatefulWidget, _SupabaseTestScreenState extends State
+     Key imports: package:flutter/material.dart, package:supabase_flutter/supabase_flutter.dart
+
+  📄 lib/screens/workspace_bookings_test_screen.dart
+     Widgets: WorkspaceBookingsTestScreen
+     Classes: WorkspaceBookingsTestScreen extends StatefulWidget, _WorkspaceBookingsTestScreenState extends State
+     Key imports: package:flutter/material.dart, package:supabase_flutter/supabase_flutter.dart
+
+  📄 macos/RunnerTests/RunnerTests.swift
+
+  📄 test/widget_test.dart
+     Key imports: package:flutter/material.dart, package:flutter_test/flutter_test.dart, package:nest_app/main.dart
+
+### OTHER (23 files)
+
+  📄 README.md
+
+  📄 analysis_options.yaml
+
+  📄 android/app/src/debug/AndroidManifest.xml
+
+  📄 android/app/src/main/AndroidManifest.xml
+
+  📄 android/app/src/main/kotlin/com/example/nest_app/MainActivity.kt
+
+  📄 android/app/src/main/res/drawable-v21/launch_background.xml
+
+  📄 android/app/src/main/res/drawable/launch_background.xml
+
+  📄 android/app/src/main/res/values-night/styles.xml
+
+  📄 android/app/src/main/res/values/styles.xml
+
+  📄 android/app/src/profile/AndroidManifest.xml
+
+  📄 ios/Runner/AppDelegate.swift
+
+  📄 ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+
+  📄 ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
+
+  📄 ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md
+
+  📄 lib/core/theme/app_theme.dart
+     Classes: AppTheme
+     Key imports: package:flutter/material.dart
+
+  ... and 8 more files
+
+## KEY ENTRY POINTS
+
+  🎯 android/app/src/main/AndroidManifest.xml
+  🎯 android/app/src/main/kotlin/com/example/nest_app/MainActivity.kt
+  🎯 android/app/src/main/res/values/styles.xml
+  🎯 android/app/src/main/res/values-night/styles.xml
+  🎯 android/app/src/main/res/drawable/launch_background.xml
+  🎯 android/app/src/main/res/drawable-v21/launch_background.xml
+  🎯 macos/Runner/MainFlutterWindow.swift
+  🎯 lib/main.dart
+  🎯 lib/features/main/main_screen.dart
+
+## ARCHITECTURE INSIGHTS
+
+
+## GUIDANCE FOR NEW DEVELOPERS
+
+1. Start by reading the main entry point (usually lib/main.dart)
+2. Review models to understand data structures
+3. Check routing/navigation to understand app flow
+4. Look at services to understand external integrations
+5. Examine UI files to see how screens are built
+
+================================================================================
+
+
+================================================================================
+COMPLETE CODE CONTENT
+================================================================================
+
+Below is the complete content of all important files.
+This allows LLMs to understand the exact implementation.
+
+--------------------------------------------------------------------------------
+FILE: lib/core/config/supabase_config.dart
+PURPOSE: config
+LINES: 7
+--------------------------------------------------------------------------------
+
+class SupabaseConfig {
+  // NEST Hamburg Production Supabase-Projekt
+  // Projekt: rgwiiymbnxxdhxpmzyjg
+  
+  static const String supabaseUrl = 'https://rgwiiymbnxxdhxpmzyjg.supabase.co';
+  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnd2lpeW1ibnh4ZGh4cG16eWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NTE3MjUsImV4cCI6MjA4NDQyNzcyNX0.gXLZxfic3AYQo7Da4wBNcZn_FdSCKSgyAA1O5DCuxG0';
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/about/about_screen.dart
+PURPOSE: ui
+LINES: 22
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('About'),
+      ),
+      body: const Center(
+        child: Text(
+          'ℹ️ About Screen\n\nComing soon!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/cafe/cafe_screen.dart
+PURPOSE: ui
+LINES: 22
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class CafeScreen extends StatelessWidget {
+  const CafeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Café'),
+      ),
+      body: const Center(
+        child: Text(
+          '☕ Café Screen\n\nComing soon!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/home/home_screen.dart
+PURPOSE: ui
+LINES: 306
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.creamBackground,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Fixed NEST logo at top
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppTheme.sageGreen,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(
+                  child: Text('🪺', style: TextStyle(fontSize: 40)),
+                ),
+              ),
+            ),
+            
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // Welcome message
+                    const Text(
+                      'Welcome back, Sarah! 👋',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkText,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Ready to be productive today?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.secondaryText,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Quick Actions Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Quick Actions',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.darkText,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {},
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.sageGreen,
+                                    ),
+                                    child: const Text('Book Desk'),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {},
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.terracotta,
+                                    ),
+                                    child: const Text('Order Coffee'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Upcoming Booking Card
+                    Card(
+                      color: AppTheme.sageGreen,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              '📅 Upcoming Booking',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Quiet Desk - Tomorrow, 9:00 AM',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Don\'t forget to check in for your next booking',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Events Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🎉 Upcoming Events',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.darkText,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.creamBackground,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'Grand Opening Event',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.darkText,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'End of March 2026',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.secondaryText,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Join us for the official opening celebration! Food, drinks, and tours.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.secondaryText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // News Card
+                    Card(
+                      color: AppTheme.terracotta,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              '📰 Latest News',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Exciting News!',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'We\'re opening a second location in Uhlenhorst, Spring 2026!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Why NEST Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Why NEST?',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.darkText,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildUSP('📍', 'Amazing Location', 'Right in the heart of Hamburg'),
+                            const SizedBox(height: 12),
+                            _buildUSP('👶', 'Expert Childcare', 'Highly educated staff for your children'),
+                            const SizedBox(height: 12),
+                            _buildUSP('🥗', 'Healthy Café', 'Fresh, organic snacks and drinks'),
+                            const SizedBox(height: 12),
+                            _buildUSP('🔒', 'Privacy & Security', 'Safe, private spaces for you and your family'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUSP(String emoji, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.darkText,
+                ),
+              ),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.secondaryText,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/login/login_screen.dart
+PURPOSE: ui
+LINES: 190
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+import '../main/main_screen.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _consentChecked = false;
+  bool _showConsentError = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() {
+    if (!_consentChecked) {
+      setState(() {
+        _showConsentError = true;
+      });
+      return;
+    }
+
+    // Navigate to main screen
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const MainScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.creamBackground,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 40),
+              // Logo
+              Center(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppTheme.sageGreen,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: const Center(
+                    child: Text('🪺', style: TextStyle(fontSize: 50)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Welcome Back',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sign in to continue',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.secondaryText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              
+              // Email Field
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  filled: true,
+                  fillColor: AppTheme.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              
+              // Password Field
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  filled: true,
+                  fillColor: AppTheme.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 24),
+              
+              // Consent Checkbox
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Checkbox(
+                    value: _consentChecked,
+                    onChanged: (value) {
+                      setState(() {
+                        _consentChecked = value ?? false;
+                        if (_consentChecked) {
+                          _showConsentError = false;
+                        }
+                      });
+                    },
+                    activeColor: AppTheme.sageGreen,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        'I agree to the Terms of Service and Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: _showConsentError ? Colors.red : AppTheme.secondaryText,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Error Message
+              if (_showConsentError)
+                const Padding(
+                  padding: EdgeInsets.only(left: 16, top: 8),
+                  child: Text(
+                    'Please accept the terms to continue',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              
+              const SizedBox(height: 24),
+              
+              // Login Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _handleLogin,
+                  child: const Text('Login'),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Forgot Password
+              TextButton(
+                onPressed: () {
+                  // TODO: Implement forgot password
+                },
+                child: const Text(
+                  'Forgot Password?',
+                  style: TextStyle(color: AppTheme.sageGreen),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/main/main_screen.dart
+PURPOSE: ui
+LINES: 63
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+import '../home/home_screen.dart';
+import '../schedule/schedule_screen.dart';
+import '../cafe/cafe_screen.dart';
+import '../profile/profile_screen.dart';
+import '../about/about_screen.dart';
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const ScheduleScreen(),
+    const CafeScreen(),
+    const ProfileScreen(),
+    const AboutScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Schedule',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.coffee),
+            label: 'Café',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info),
+            label: 'About',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/onboarding/onboarding_screen.dart
+PURPOSE: ui
+LINES: 61
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+import '../login/login_screen.dart';
+
+class OnboardingScreen extends StatelessWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.creamBackground,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              const Text(
+                '🪺',
+                style: TextStyle(fontSize: 80),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Welcome to NEST',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Coworking space designed for parents.\nWork productively while your children play safely.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.secondaryText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    );
+                  },
+                  child: const Text('Get Started'),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/profile/profile_screen.dart
+PURPOSE: ui
+LINES: 22
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+      ),
+      body: const Center(
+        child: Text(
+          '👤 Profile Screen\n\nComing soon!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/schedule/schedule_screen.dart
+PURPOSE: ui
+LINES: 22
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
+
+class ScheduleScreen extends StatelessWidget {
+  const ScheduleScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Schedule'),
+      ),
+      body: const Center(
+        child: Text(
+          '📅 Schedule Screen\n\nComing soon!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/features/splash/splash_screen.dart
+PURPOSE: ui
+LINES: 100
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import 'dart:async';
+import '../../core/theme/app_theme.dart';
+import '../onboarding/onboarding_screen.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+    
+    _controller.forward();
+    
+    // Navigate to Onboarding after 2 seconds
+    Timer(const Duration(seconds: 2), () {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const OnboardingScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.creamBackground,
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // NEST Logo (placeholder - you can add your actual logo)
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppTheme.sageGreen,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Center(
+                  child: Text(
+                    '🪺',
+                    style: TextStyle(fontSize: 60),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'NEST Hamburg',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Coworking for Parents',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.secondaryText,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/screens/login_screen.dart
+PURPOSE: ui
+LINES: 267
+--------------------------------------------------------------------------------
+
+// --- START DES FINALEN, KORRIGIERTEN UND VOLLSTÄNDIGEN CODES ---
+
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// Helper to access Supabase client
+final supabase = Supabase.instance.client;
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
+  bool _agreeToTerms = false;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_isLoading || !mounted) return;
+    if (!_agreeToTerms) {
+      _showSnackbar('Please agree to the Terms & Conditions and Privacy Policy.', isError: true);
+      return;
+    }
+    setState(() => _isLoading = true);
+
+    try {
+      final authResponse = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      if (authResponse.user != null && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } on AuthException catch (error) {
+      if (mounted) _showSnackbar(error.message, isError: true);
+    } catch (error) {
+      if (mounted) _showSnackbar('An unexpected error occurred.', isError: true);
+    }
+
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _showSnackbar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green,
+      ),
+    );
+  }
+
+  void _handleSignUp() {
+    showDialog(
+      context: context,
+      builder: (context) => SignUpDialog(
+        // KORRIGIERTE ZEILE:
+        onResult: _showSnackbar,
+      ),
+    );
+  }
+
+  void _handleForgotPassword() {
+    showDialog(
+      context: context,
+      builder: (context) => ForgotPasswordDialog(
+        // KORRIGIERTE ZEILE:
+        onResult: _showSnackbar,
+      ),
+    );
+  }
+
+  static const Color buttonColor = Color(0xFF87A981);
+  static const Color primaryTextColor = Color(0xFF4A4A4A);
+  static const Color secondaryTextColor = Color(0xFF8A8A8A);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 60),
+                _buildLogo(),
+                const SizedBox(height: 40),
+                _buildWelcomeText(),
+                const SizedBox(height: 32),
+                _buildEmailField(),
+                const SizedBox(height: 16),
+                _buildPasswordField(),
+                const SizedBox(height: 16),
+                _buildTermsCheckbox(),
+                const SizedBox(height: 24),
+                _buildLoginButton(),
+                const SizedBox(height: 24),
+                _buildFooter(),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogo() => Image.asset('assets/nest_logo.png', height: 100, errorBuilder: (c, o, s) => const SizedBox(height: 100));
+  Widget _buildWelcomeText() => Column(children: [const Text('WELCOME TO NEST', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryTextColor)), const SizedBox(height: 8), const Text('Your collaborative workspace', style: TextStyle(fontSize: 16, color: secondaryTextColor))]);
+  Widget _buildEmailField() => TextField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: 'Email', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))));
+  Widget _buildPasswordField() => TextField(controller: _passwordController, obscureText: !_isPasswordVisible, decoration: InputDecoration(labelText: 'Password', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), suffixIcon: IconButton(icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible))));
+  Widget _buildTermsCheckbox() => Row(children: [Checkbox(value: _agreeToTerms, onChanged: (value) => setState(() => _agreeToTerms = value ?? false)), Expanded(child: RichText(text: TextSpan(style: TextStyle(fontSize: 14, color: secondaryTextColor, fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily), children: [const TextSpan(text: 'I agree to the '), TextSpan(text: 'Terms & Conditions', style: const TextStyle(decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () {}), const TextSpan(text: ' and '), TextSpan(text: 'Privacy Policy', style: const TextStyle(decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () {})])))]);
+  Widget _buildLoginButton() => ElevatedButton(onPressed: _handleLogin, style: ElevatedButton.styleFrom(backgroundColor: buttonColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _isLoading ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)) : const Text('LOG IN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)));
+  Widget _buildFooter() => Column(children: [RichText(text: TextSpan(style: TextStyle(fontSize: 14, color: secondaryTextColor, fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily), children: [const TextSpan(text: "Don't have an account? "), TextSpan(text: 'Sign Up', style: const TextStyle(fontWeight: FontWeight.bold, color: buttonColor), recognizer: TapGestureRecognizer()..onTap = _handleSignUp)])), const SizedBox(height: 16), GestureDetector(onTap: _handleForgotPassword, child: const Text('Forgot Password?', style: TextStyle(fontSize: 14, color: secondaryTextColor, decoration: TextDecoration.underline)))]);
+}
+
+class SignUpDialog extends StatefulWidget {
+  final Function(String message, {bool isError}) onResult;
+  const SignUpDialog({super.key, required this.onResult});
+
+  @override
+  State<SignUpDialog> createState() => _SignUpDialogState();
+}
+
+class _SignUpDialogState extends State<SignUpDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _performSignUp() async {
+    if (!_formKey.currentState!.validate() || !mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await supabase.auth.signUp(email: _emailController.text.trim(), password: _passwordController.text.trim());
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onResult('Success! Please check your email to confirm your account.', isError: false);
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onResult(error.message, isError: true);
+      }
+    }
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Create Account'),
+      content: Form(key: _formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress, validator: (v) => (v == null || !v.contains('@')) ? 'Please enter a valid email' : null),
+        const SizedBox(height: 8),
+        TextFormField(controller: _passwordController, decoration: const InputDecoration(labelText: 'Password'), obscureText: true, validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null),
+        const SizedBox(height: 8),
+        TextFormField(controller: _confirmPasswordController, decoration: const InputDecoration(labelText: 'Confirm Password'), obscureText: true, validator: (v) => v != _passwordController.text ? 'Passwords do not match' : null),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        ElevatedButton(onPressed: _isLoading ? null : _performSignUp, child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 3)) : const Text('Sign Up')),
+      ],
+    );
+  }
+}
+
+class ForgotPasswordDialog extends StatefulWidget {
+  final Function(String message, {bool isError}) onResult;
+  const ForgotPasswordDialog({super.key, required this.onResult});
+
+  @override
+  State<ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
+  final _emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendResetLink() async {
+    if (!_formKey.currentState!.validate() || !mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await supabase.auth.resetPasswordForEmail(_emailController.text.trim());
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onResult('Success! If an account exists, a password reset link has been sent.', isError: false);
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onResult(error.message, isError: true);
+      }
+    }
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Reset Password'),
+      content: Form(key: _formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Text('Enter your email and we will send you a link to reset your password.'),
+        const SizedBox(height: 16),
+        TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress, validator: (v) => (v == null || !v.contains('@')) ? 'Please enter a valid email' : null),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        ElevatedButton(onPressed: _isLoading ? null : _sendResetLink, child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 3)) : const Text('Send Link')),
+      ],
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('NEST Home'), actions: [
+        IconButton(icon: const Icon(Icons.logout), onPressed: () async {
+          await supabase.auth.signOut();
+          if (context.mounted) Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+        })
+      ]),
+      body: const Center(child: Text('Welcome to NEST!\n\nYou are successfully logged in.', textAlign: TextAlign.center, style: TextStyle(fontSize: 24))),
+    );
+  }
+}
+
+// --- ENDE DES FINALEN, KORRIGIERTEN UND VOLLSTÄNDIGEN CODES ---
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/screens/update_password_screen.dart
+PURPOSE: ui
+LINES: 112
+--------------------------------------------------------------------------------
+
+// --- Code für die neue Datei: lib/screens/update_password_screen.dart ---
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'login_screen.dart'; // Wir brauchen das für die Navigation danach
+
+final supabase = Supabase.instance.client;
+
+class UpdatePasswordScreen extends StatefulWidget {
+  const UpdatePasswordScreen({super.key});
+
+  @override
+  State<UpdatePasswordScreen> createState() => _UpdatePasswordScreenState();
+}
+
+class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
+  Future<void> _updatePassword() async {
+    if (!_formKey.currentState!.validate() || !mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await supabase.auth.updateUser(
+        UserAttributes(password: _passwordController.text.trim()),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password updated successfully! Please log in.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+        );
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.message),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Set New Password'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Please enter your new password below.',
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: 'New Password'),
+                obscureText: true,
+                validator: (v) => (v == null || v.length < 6)
+                    ? 'Password must be at least 6 characters'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _confirmPasswordController,
+                decoration: const InputDecoration(labelText: 'Confirm New Password'),
+                obscureText: true,
+                validator: (v) => v != _passwordController.text
+                    ? 'Passwords do not match'
+                    : null,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _updatePassword,
+                child: _isLoading
+                    ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 3))
+                    : const Text('Update Password'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/screens/supabase_test_screen.dart
+PURPOSE: test
+LINES: 247
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class SupabaseTestScreen extends StatefulWidget {
+  const SupabaseTestScreen({super.key});
+
+  @override
+  State<SupabaseTestScreen> createState() => _SupabaseTestScreenState();
+}
+
+class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
+  final _supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> _menuItems = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMenuItems();
+  }
+
+  Future<void> _loadMenuItems() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      print('🔍 Loading cafe menu items from Supabase...');
+      
+      final response = await _supabase
+          .from('cafe_menu_items')
+          .select()
+          .order('name_de', ascending: true);
+      
+      print('✅ Menu items loaded: ${response.length} items');
+      
+      setState(() {
+        _menuItems = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Error loading menu items: $e');
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDF8F3),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF7CAE7A),
+        foregroundColor: Colors.white,
+        title: const Text(
+          'NEST Café Menü',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadMenuItems,
+            tooltip: 'Neu laden',
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF7CAE7A),
+              ),
+            )
+          : _error != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Color(0xFFE57373),
+                          size: 64,
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Fehler beim Laden',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D2D2D),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF757575),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: _loadMenuItems,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Erneut versuchen'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7CAE7A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : _menuItems.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.coffee_outlined,
+                            size: 64,
+                            color: Color(0xFF757575),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Keine Menü-Einträge gefunden',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Color(0xFF757575),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        // Success Header
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          color: const Color(0xFF7CAE7A).withOpacity(0.1),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                color: Color(0xFF7CAE7A),
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '${_menuItems.length} Menü-Einträge geladen',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2D2D2D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Menu Items List
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _menuItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _menuItems[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF7CAE7A)
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.coffee,
+                                      color: Color(0xFF7CAE7A),
+                                      size: 28,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    item['name_de'] ?? item['name_en'] ?? 'Unknown',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Color(0xFF2D2D2D),
+                                    ),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      item['description_de'] ?? item['description_en'] ?? '',
+                                      style: const TextStyle(
+                                        color: Color(0xFF757575),
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF7CAE7A),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '€${item['price']?.toStringAsFixed(2) ?? '0.00'}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/screens/workspace_bookings_test_screen.dart
+PURPOSE: test
+LINES: 155
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class WorkspaceBookingsTestScreen extends StatefulWidget {
+  const WorkspaceBookingsTestScreen({super.key});
+
+  @override
+  State<WorkspaceBookingsTestScreen> createState() => _WorkspaceBookingsTestScreenState();
+}
+
+class _WorkspaceBookingsTestScreenState extends State<WorkspaceBookingsTestScreen> {
+  final _supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> _bookings = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookings();
+  }
+
+  Future<void> _loadBookings() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await _supabase
+          .from('workspace_bookings')
+          .select('''
+            *,
+            users!inner(
+              full_name,
+              email
+            )
+          ''')
+          .order('booking_date', ascending: true);
+
+      setState(() {
+        _bookings = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Workspace Bookings Test'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadBookings,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text('Error: $_error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadBookings,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      )
+          : _bookings.isEmpty
+          ? const Center(child: Text('No bookings found'))
+          : ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _bookings.length,
+        itemBuilder: (context, index) {
+          final booking = _bookings[index];
+          final user = booking['users'];
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: _getWorkspaceColor(booking['workspace_type']),
+                child: Icon(
+                  _getWorkspaceIcon(booking['workspace_type']),
+                  color: Colors.white,
+                ),
+              ),
+              title: Text(
+                booking['workspace_type'] ?? 'Unknown',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('User: ${user['full_name']} (${user['email']})'),
+                  Text('Date: ${booking['booking_date']}'),
+                  Text('Time: ${booking['start_time']} - ${booking['end_time']}'),
+                  Text('Status: ${booking['status']}'),
+                ],
+              ),
+              trailing: Text(
+                '€${booking['total_price']}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getWorkspaceColor(String? type) {
+    switch (type) {
+      case 'desk':
+        return Colors.blue;
+      case 'meeting_room':
+        return Colors.orange;
+      case 'private_office':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getWorkspaceIcon(String? type) {
+    switch (type) {
+      case 'desk':
+        return Icons.desk;
+      case 'meeting_room':
+        return Icons.meeting_room;
+      case 'private_office':
+        return Icons.business;
+      default:
+        return Icons.workspace_premium;
+    }
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: test/widget_test.dart
+PURPOSE: test
+LINES: 30
+--------------------------------------------------------------------------------
+
+// This is a basic Flutter widget test.
+//
+// To perform an interaction with a widget in your test, use the WidgetTester
+// utility in the flutter_test package. For example, you can send tap and scroll
+// gestures. You can also use WidgetTester to find child widgets in the widget
+// tree, read text, and verify that the values of widget properties are correct.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:nest_app/main.dart';
+
+void main() {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const NestApp());
+
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
+
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
+  });
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: README.md
+PURPOSE: other
+LINES: 16
+--------------------------------------------------------------------------------
+
+# nest_app
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+
+
+
+--------------------------------------------------------------------------------
+FILE: analysis_options.yaml
+PURPOSE: other
+LINES: 28
+--------------------------------------------------------------------------------
+
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at https://dart.dev/lints.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a specific dart file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
+  rules:
+    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
+    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
+
+
+
+--------------------------------------------------------------------------------
+FILE: ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+PURPOSE: other
+LINES: 122
+--------------------------------------------------------------------------------
+
+{
+  "images" : [
+    {
+      "size" : "20x20",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-20x20@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "20x20",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-20x20@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-29x29@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-29x29@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-29x29@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-40x40@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-40x40@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "60x60",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-60x60@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "60x60",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-60x60@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "20x20",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-20x20@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "20x20",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-20x20@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-29x29@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-29x29@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-40x40@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-40x40@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "76x76",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-76x76@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "76x76",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-76x76@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "83.5x83.5",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-83.5x83.5@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "1024x1024",
+      "idiom" : "ios-marketing",
+      "filename" : "Icon-App-1024x1024@1x.png",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
+PURPOSE: other
+LINES: 23
+--------------------------------------------------------------------------------
+
+{
+  "images" : [
+    {
+      "idiom" : "universal",
+      "filename" : "LaunchImage.png",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "LaunchImage@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "LaunchImage@3x.png",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md
+PURPOSE: other
+LINES: 4
+--------------------------------------------------------------------------------
+
+# Launch Screen Assets
+
+You can customize the launch screen with your own desired assets by replacing the image files in this directory.
+
+You can also do it by opening your Flutter project's Xcode project with `open ios/Runner.xcworkspace`, selecting `Runner/Assets.xcassets` in the Project Navigator and dropping in the desired images.
+
+
+--------------------------------------------------------------------------------
+FILE: lib/core/theme/app_theme.dart
+PURPOSE: other
+LINES: 85
+--------------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+
+class AppTheme {
+  // NEST Color Palette (from Android)
+  static const Color creamBackground = Color(0xFFFDF8F3);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color darkText = Color(0xFF2D2D2D);
+  static const Color secondaryText = Color(0xFF757575);
+  static const Color grayText = Color(0xFF9E9E9E);
+  static const Color sageGreen = Color(0xFF7CAE7A);
+  static const Color terracotta = Color(0xFFD4A574);
+  static const Color coral = Color(0xFFFF6B6B);
+  static const Color divider = Color(0xFFE0E0E0);
+  
+  static ThemeData get lightTheme {
+    return ThemeData(
+      primaryColor: sageGreen,
+      scaffoldBackgroundColor: creamBackground,
+      fontFamily: 'Charlevoix',
+      
+      appBarTheme: const AppBarTheme(
+        backgroundColor: creamBackground,
+        foregroundColor: darkText,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      
+      cardTheme: CardThemeData(
+        color: white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: sageGreen,
+          foregroundColor: white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: darkText,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: darkText,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          color: darkText,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          color: secondaryText,
+        ),
+        bodySmall: TextStyle(
+          fontSize: 13,
+          color: secondaryText,
+        ),
+      ),
+      
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: white,
+        selectedItemColor: coral,
+        unselectedItemColor: grayText,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: lib/main.dart
+PURPOSE: other
+LINES: 68
+--------------------------------------------------------------------------------
+
+// --- Code für die aktualisierte Datei: lib/main.dart ---
+
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// Deine Konfigurationen bleiben
+import 'core/config/supabase_config.dart';
+import 'core/theme/app_theme.dart';
+
+// Wir importieren jetzt ALLE unsere möglichen Start-Bildschirme
+import 'screens/login_screen.dart';
+import 'screens/update_password_screen.dart'; // <-- Unser neuer Raum
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: SupabaseConfig.supabaseUrl,
+    anonKey: SupabaseConfig.supabaseAnonKey,
+  );
+
+  runApp(const NestApp());
+}
+
+class NestApp extends StatelessWidget {
+  const NestApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'NEST Hamburg',
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+
+      // HIER IST DAS NEUE GEHIRN DER APP:
+      home: StreamBuilder<AuthState>(
+        // Wir lauschen auf den Authentifizierungs-Strom von Supabase
+        stream: Supabase.instance.client.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+
+          // Solange wir auf ein Signal warten, zeigen wir einen Ladekreis
+          if (!snapshot.hasData) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
+
+          final event = snapshot.data!.event;
+          final session = snapshot.data!.session;
+
+          // SIGNAL 1: "PASSWORT-RESET-LINK GEKLICKT!"
+          // Wenn Supabase dieses Signal sendet, zeigen wir unseren neuen Raum an.
+          if (event == AuthChangeEvent.passwordRecovery) {
+            return const UpdatePasswordScreen();
+          }
+
+          // SIGNAL 2: "NUTZER IST EINGELOGGT!"
+          // Wenn es eine aktive Sitzung gibt, gehen wir direkt zum Home Screen.
+          if (session != null) {
+            return const HomeScreen();
+          }
+
+          // KEIN SIGNAL:
+          // In allen anderen Fällen (Nutzer ist ausgeloggt), zeigen wir den Login Screen.
+          return const LoginScreen();
+        },
+      ),
+    );
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+PURPOSE: other
+LINES: 68
+--------------------------------------------------------------------------------
+
+{
+  "images" : [
+    {
+      "size" : "16x16",
+      "idiom" : "mac",
+      "filename" : "app_icon_16.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "16x16",
+      "idiom" : "mac",
+      "filename" : "app_icon_32.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "32x32",
+      "idiom" : "mac",
+      "filename" : "app_icon_32.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "32x32",
+      "idiom" : "mac",
+      "filename" : "app_icon_64.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "128x128",
+      "idiom" : "mac",
+      "filename" : "app_icon_128.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "128x128",
+      "idiom" : "mac",
+      "filename" : "app_icon_256.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "256x256",
+      "idiom" : "mac",
+      "filename" : "app_icon_256.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "256x256",
+      "idiom" : "mac",
+      "filename" : "app_icon_512.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "512x512",
+      "idiom" : "mac",
+      "filename" : "app_icon_512.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "512x512",
+      "idiom" : "mac",
+      "filename" : "app_icon_1024.png",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
+
+
+
+--------------------------------------------------------------------------------
+FILE: pubspec.yaml
+PURPOSE: other
+LINES: 24
+--------------------------------------------------------------------------------
+
+name: nest_app
+description: "NEST Hamburg App"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.12.0
+  flutter_dotenv: ^6.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+
+
+
+--------------------------------------------------------------------------------
+FILE: web/manifest.json
+PURPOSE: other
+LINES: 35
+--------------------------------------------------------------------------------
+
+{
+    "name": "nest_app",
+    "short_name": "nest_app",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
+
+
+
+================================================================================
+END OF CODE CONTENT
+================================================================================
