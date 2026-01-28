@@ -45,3 +45,13 @@ app.*.map.json
 /android/app/release
 
 *.hprof
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+
+# Flutter build files
+.flutter-plugins-dependencies
