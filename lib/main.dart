@@ -2,8 +2,14 @@
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+// NEW: Import for Flutter Stripe
+import 'package:flutter_stripe/flutter_stripe.dart';
+// NEW: Import for Flutter DotEnv
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
@@ -14,10 +20,21 @@ import 'screens/update_password_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // NEW: Load environment variables from .env file FIRST
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
+
+  // NEW: Initialize Stripe ONLY on mobile platforms (not web)
+  if (!kIsWeb) {
+    Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
+    Stripe.urlScheme = 'flutterstripe'; // Required for web/mobile redirects
+  }
+
   runApp(const NestApp());
 }
 
@@ -33,7 +50,7 @@ class NestApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NEST Hamburg',
+      title: kIsWeb ? 'NEST Hamburg (Web-Version)' : 'NEST Hamburg',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
