@@ -1,15 +1,10 @@
-// VOLLSTÄNDIG ERSETZEN: lib/main.dart
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// NEW: Import for Flutter Stripe
 import 'package:flutter_stripe/flutter_stripe.dart';
-// NEW: Import for Flutter DotEnv
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
@@ -18,26 +13,33 @@ import 'features/main/main_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'screens/update_password_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // NEW: Load environment variables from .env file FIRST
-  await dotenv.load(fileName: ".env");
+  // ⭐ Load .env ONLY on mobile — and load it manually (not as an asset)
+  if (!kIsWeb) {
+    await dotenv.load(fileName: ".env");
+  }
 
+  // ⭐ Initialize Supabase
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
 
-  // NEW: Initialize Stripe ONLY on mobile platforms (not web)
+  // ⭐ Initialize Stripe (mobile only)
   if (!kIsWeb) {
-    Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
-    Stripe.urlScheme = 'flutterstripe'; // Required for web/mobile redirects
+    final publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+    if (publishableKey != null && publishableKey.isNotEmpty) {
+      Stripe.publishableKey = publishableKey;
+      Stripe.urlScheme = 'flutterstripe';
+    }
   }
 
   runApp(const NestApp());
 }
 
+// ⭐ Scroll behavior for all platforms
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices =>
@@ -61,6 +63,7 @@ class NestApp extends StatelessWidget {
 
 class AuthRedirect extends StatefulWidget {
   const AuthRedirect({super.key});
+
   @override
   State<AuthRedirect> createState() => _AuthRedirectState();
 }
@@ -72,48 +75,52 @@ class _AuthRedirectState extends State<AuthRedirect> {
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    _loadOnboardingStatus();
   }
 
-  Future<void> _checkOnboardingStatus() async {
+  Future<void> _loadOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-    setState(() {
-      _showOnboarding = !hasSeenOnboarding;
-    });
+    final seen = prefs.getBool('hasSeenOnboarding') ?? false;
+    setState(() => _showOnboarding = !seen);
   }
 
-  void _onOnboardingFinished() async {
+  Future<void> _onOnboardingFinished() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
-    setState(() {
-      _showOnboarding = false;
-    });
+    setState(() => _showOnboarding = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Still loading SharedPreferences
     if (_showOnboarding == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
+    // Show onboarding
     if (_showOnboarding!) {
-      // HIER WIRD DIE onFinished FUNKTION NUN KORREKT ÜBERGEBEN
       return OnboardingScreen(onFinished: _onOnboardingFinished);
     }
 
+    // Auth Stream → Login / MainScreen
     return StreamBuilder<AuthState>(
       stream: _supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        if (snapshot.data?.session != null) {
-          return const MainScreen(); // Wir benutzen immer noch den Dummy-Screen
+
+        final session = snapshot.data?.session;
+        if (session != null) {
+          return const MainScreen();
         }
+
         return const LoginScreen();
       },
     );
   }
 }
-// This is a test to see if Git tracks my changes.

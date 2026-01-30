@@ -18,36 +18,40 @@ class NestPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,         // FULL width of parent
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: 48,
-          maxWidth: 400,
-        ),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ButtonStyle(
-            elevation: WidgetStateProperty.all(0),
-            backgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.hovered)) return hoverColor;
-              return backgroundColor;
-            }),
-            padding: WidgetStateProperty.all(
-              const EdgeInsets.symmetric(vertical: 14),
-            ),
-            textStyle: WidgetStateProperty.all(const TextStyle(
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: 48,
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ButtonStyle(
+          elevation: WidgetStateProperty.all(0),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.hovered)) return hoverColor;
+            return backgroundColor;
+          }),
+          padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          ),
+          textStyle: WidgetStateProperty.all(
+            const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
               fontFamily: 'Montserrat',
-            )),
-            shape: WidgetStateProperty.all(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
-          child: Text(text, style: TextStyle(color: textColor)),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(50), // smoother pill shape
+            ),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(color: textColor),
         ),
       ),
     );
   }
 }
+

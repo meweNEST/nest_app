@@ -33,10 +33,29 @@ flutter:
     - assets/images/onboarding_4.png
     - assets/images/onboarding_5.png
     - assets/images/nest_logo.png
-    - assets/images/carousel_full.png
-    - assets/images/carousel_regular.png
-    - assets/images/carousel_parttime.png
-    - assets/images/carousel_light.png
-    - assets/images/carousel_flexi.png
-    - assets/images/carousel_day.png
+    - assets/images/delia and melissa.jpeg
     - .env
+
+  fonts:
+    - family: SweetAndSalty
+      fonts:
+        - asset: assets/fonts/Sweet&Salty-Regular.otf
+
+    - family: CharlevoixPro
+      fonts:
+        - asset: assets/fonts/CharlevoixPro-Thin.otf
+          weight: 100
+        - asset: assets/fonts/CharlevoixPro-Light.otf
+          weight: 300
+        - asset: assets/fonts/CharlevoixPro-Regular.otf
+          weight: 400
+        - asset: assets/fonts/CharlevoixPro-Medium.otf
+          weight: 500
+        - asset: assets/fonts/CharlevoixPro-Bold.otf
+          weight: 700
+        - asset: assets/fonts/CharlevoixPro-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/CharlevoixPro-Black.otf
+          weight: 900
+
+

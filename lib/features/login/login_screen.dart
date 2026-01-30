@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import 'package:nest_app/core/theme/app_theme.dart';
+import 'package:nest_app/widgets/nest_button.dart';
 import '../main/main_screen.dart';
+
+const Text(
+'HELLO THIS IS NEW LOGIN UI',
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,9 +14,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _consentChecked = false;
+  // CONTROLLERS
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // STATE
+  bool _obscurePassword = true;
+  bool _acceptedTerms = false;
   bool _showConsentError = false;
 
   @override
@@ -22,165 +30,275 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (!_consentChecked) {
-      setState(() {
-        _showConsentError = true;
-      });
+  // NAVIGATION CALLBACKS
+  void _login() {
+    if (!_acceptedTerms) {
+      setState(() => _showConsentError = true);
       return;
     }
 
-    // Navigate to main screen
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const MainScreen()),
+      MaterialPageRoute(builder: (_) => const MainScreen()),
     );
+  }
+
+  void _goToSignup() {
+    // TODO: add your sign‑up navigation
+  }
+
+  void _goToForgotPassword() {
+    // TODO: add your forgot password navigation
+  }
+
+  void _openTerms() {
+    // TODO: open terms link
+  }
+
+  void _openPrivacy() {
+    // TODO: open privacy link
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.creamBackground,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+
               const SizedBox(height: 40),
-              // Logo
-              Center(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: AppTheme.sageGreen,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: const Center(
-                    child: Text('🪺', style: TextStyle(fontSize: 50)),
-                  ),
-                ),
+
+              // LOGO
+              Image.asset(
+                'assets/images/nest_logo.png',
+                height: 95,
               ),
+
               const SizedBox(height: 24),
+
+              // HEADLINE
               const Text(
-                'Welcome Back',
+                'WELCOME TO NEST',
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'SweetAndSalty',
+                  fontSize: 30,
                   color: AppTheme.darkText,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 4),
+
+              // SUBLINE
               const Text(
-                'Sign in to continue',
+                'Your collaborative workspace',
                 style: TextStyle(
+                  fontFamily: 'CharlevoixPro',
                   fontSize: 16,
                   color: AppTheme.secondaryText,
                 ),
                 textAlign: TextAlign.center,
               ),
+
               const SizedBox(height: 40),
-              
-              // Email Field
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  filled: true,
-                  fillColor: AppTheme.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+
+              // EMAIL FIELD
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _emailController,
+                  style: const TextStyle(
+                    fontFamily: 'CharlevoixPro',
+                    fontSize: 16,
+                  ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Email',
+                    hintStyle: TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
-                keyboardType: TextInputType.emailAddress,
               ),
+
               const SizedBox(height: 16),
-              
-              // Password Field
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  filled: true,
-                  fillColor: AppTheme.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+
+              // PASSWORD FIELD
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(
+                    fontFamily: 'CharlevoixPro',
+                    fontSize: 16,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Password',
+                    hintStyle: const TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      color: Colors.grey,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
                   ),
                 ),
-                obscureText: true,
               ),
-              const SizedBox(height: 24),
-              
-              // Consent Checkbox
+
+              const SizedBox(height: 20),
+
+              // TERMS CHECKBOX
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Checkbox(
-                    value: _consentChecked,
-                    onChanged: (value) {
-                      setState(() {
-                        _consentChecked = value ?? false;
-                        if (_consentChecked) {
-                          _showConsentError = false;
-                        }
-                      });
-                    },
-                    activeColor: AppTheme.sageGreen,
+                    value: _acceptedTerms,
+                    onChanged: (value) =>
+                        setState(() => _acceptedTerms = value ?? false),
                   ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(
-                        'I agree to the Terms of Service and Privacy Policy',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: _showConsentError ? Colors.red : AppTheme.secondaryText,
+                    child: Wrap(
+                      children: [
+                        const Text(
+                          'I agree to the ',
+                          style: TextStyle(
+                            fontFamily: 'CharlevoixPro',
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
+                        GestureDetector(
+                          onTap: _openTerms,
+                          child: const Text(
+                            'Terms & Conditions',
+                            style: TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.darkText,
+                            ),
+                          ),
+                        ),
+                        const Text(
+                          ' and ',
+                          style: TextStyle(fontFamily: 'CharlevoixPro'),
+                        ),
+                        GestureDetector(
+                          onTap: _openPrivacy,
+                          child: const Text(
+                            'Privacy Policy',
+                            style: TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.darkText,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              
-              // Error Message
+
               if (_showConsentError)
                 const Padding(
-                  padding: EdgeInsets.only(left: 16, top: 8),
+                  padding: EdgeInsets.only(top: 4),
                   child: Text(
-                    'Please accept the terms to continue',
+                    'Please accept the terms to continue.',
                     style: TextStyle(
+                      fontFamily: 'CharlevoixPro',
                       color: Colors.red,
                       fontSize: 13,
                     ),
                   ),
                 ),
-              
-              const SizedBox(height: 24),
-              
-              // Login Button
+
+              const SizedBox(height: 20),
+
+              // LOGIN BUTTON
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _handleLogin,
-                  child: const Text('Login'),
+                child: NestPrimaryButton(
+                  text: 'LOG IN',
+                  onPressed: _login,
+                  backgroundColor: AppTheme.sageGreen,
                 ),
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Forgot Password
-              TextButton(
-                onPressed: () {
-                  // TODO: Implement forgot password
-                },
+
+              const SizedBox(height: 20),
+
+              // SIGN UP
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Don't have an account? ",
+                    style: TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      color: AppTheme.secondaryText,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _goToSignup,
+                    child: const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        fontFamily: 'CharlevoixPro',
+                        color: AppTheme.bookingButtonColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // RESET PASSWORD
+              GestureDetector(
+                onTap: _goToForgotPassword,
                 child: const Text(
                   'Forgot Password?',
-                  style: TextStyle(color: AppTheme.sageGreen),
+                  style: TextStyle(
+                    fontFamily: 'CharlevoixPro',
+                    color: AppTheme.darkText,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
+
+              const SizedBox(height: 40),
             ],
           ),
         ),

@@ -24,6 +24,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
   static const Color secondaryText = Color(0xFF757575);
 
   List<Map<String, dynamic>> memberships = [];
+  List<Map<String, dynamic>> passes = [];
 
   @override
   void initState() {
@@ -43,20 +44,67 @@ class _MembershipScreenState extends State<MembershipScreen> {
     super.dispose();
   }
 
-  // CALCULATE HOURLY PRICE
-  double _calculateHourly(Map<String, dynamic> row) {
-    final monthly = row['price_monthly'];
-    final prepaid = row['price_prepaid'];
-    final maxHours = row['max_hours_per_week'];
+  // LOAD MEMBERSHIPS
+  Future<void> _loadMemberships() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('memberships')
+          .select(
+          'id, name, description_short, description_full, price_per_hour, bullet_points')
+          .order('id');
 
-    if (monthly != null && maxHours != null && maxHours > 0) {
-      return (monthly / 100) / (maxHours * 4);
+      final List<Map<String, dynamic>> loaded =
+      response.map<Map<String, dynamic>>((row) {
+        return {
+          'id': row['id'],
+          'title': row['name'],
+          'shortDesc': row['description_short'] ?? '',
+          'fullDesc': row['description_full'] ?? row['description_short'] ?? '',
+          'priceHour': (row['price_per_hour'] as num).toStringAsFixed(2),
+          'color': _getColorForMembership(row['name']),
+          'emoji': _getEmojiForMembership(row['name']),
+          'image': _getImageForMembership(row['name']),
+          'isPass': row['name'].toLowerCase().contains('pass'),
+          'bullets': row['bullet_points'] ?? [],
+        };
+      }).toList();
+
+      // Separate memberships / passes
+      final List<Map<String, dynamic>> membershipPlans = [];
+      final List<Map<String, dynamic>> passProducts = [];
+
+      const desiredOrder = [
+        'full membership',
+        'regular membership',
+        'part-time membership',
+        'light membership'
+      ];
+
+      for (var m in loaded) {
+        final name = m['title'].toString().toLowerCase();
+        if (desiredOrder.contains(name)) {
+          membershipPlans.add(m);
+        } else {
+          passProducts.add(m);
+        }
+      }
+
+      // Sort memberships by desired order
+      membershipPlans.sort((a, b) {
+        return desiredOrder
+            .indexOf(a['title'].toString().toLowerCase())
+            .compareTo(desiredOrder.indexOf(b['title'].toString().toLowerCase()));
+      });
+
+      setState(() {
+        memberships = membershipPlans;
+        passes = passProducts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      print('Error loading memberships: $e');
     }
-    if (prepaid != null) {
-      final days = row['amount_days_access'] ?? 1;
-      return (prepaid / 100) / days;
-    }
-    return 0.0;
   }
 
   // COLORS
@@ -119,37 +167,6 @@ class _MembershipScreenState extends State<MembershipScreen> {
     }
   }
 
-  // LOAD MEMBERSHIPS
-  Future<void> _loadMemberships() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('memberships')
-          .select()
-          .order('id');
-
-      final List<Map<String, dynamic>> loaded =
-      response.map<Map<String, dynamic>>((row) {
-        return {
-          'id': row['id'],
-          'title': row['name'],
-          'shortDesc': row['description_short'] ?? '',
-          'fullDesc': row['description_full'] ?? row['description_short'] ?? '',
-          'priceHour': _calculateHourly(row).toStringAsFixed(2),
-          'color': _getColorForMembership(row['name']),
-          'emoji': _getEmojiForMembership(row['name']),
-          'image': _getImageForMembership(row['name']),
-          'isPass': row['name'].toLowerCase().contains('pass'),
-        };
-      }).toList();
-
-      setState(() {
-        memberships = loaded;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
   // SHOW PASS OFFER
   void _showPassOffer(Map<String, dynamic> m) {
     showDialog(
@@ -168,7 +185,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
               Text(m['fullDesc'] ?? ''),
               const SizedBox(height: 20),
               NestPrimaryButton(
-                text: 'Mehr zum Angebot',
+                text: 'Show Offer',
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -209,6 +226,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                     icon: const Icon(Icons.close)),
               ]),
               const SizedBox(height: 20),
+
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -221,12 +239,15 @@ class _MembershipScreenState extends State<MembershipScreen> {
                     Text(m['title'] ?? ''),
                     Text(
                       'From ${m['priceHour']} € / hour',
-                      style: TextStyle(color: m['color'], fontWeight: FontWeight.bold),
+                      style:
+                      TextStyle(color: m['color'], fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 20),
+
               TextField(
                 controller: promo,
                 decoration: InputDecoration(
@@ -238,15 +259,18 @@ class _MembershipScreenState extends State<MembershipScreen> {
                   ),
                 ),
               ),
+
               Row(children: [
                 Checkbox(
                     value: accepted,
                     onChanged: (v) => setDialogState(() => accepted = v ?? false)),
                 const Expanded(child: Text('I accept the Terms')),
               ]),
+
               const SizedBox(height: 10),
+
               NestPrimaryButton(
-                text: 'Subscribe Now',
+                text: "Let's subscribe",
                 onPressed: accepted
                     ? () {
                   Navigator.pop(context);
@@ -280,7 +304,8 @@ class _MembershipScreenState extends State<MembershipScreen> {
         Text('Business Solutions',
             style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 8),
-        Text('Custom packages for companies and relocating families',
+        Text(
+            'Custom packages for companies and relocating families',
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -332,25 +357,23 @@ class _MembershipScreenState extends State<MembershipScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Need help choosing?',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    const Text('Our team is here to help'),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => setState(() => _showContact = !_showContact),
-                      icon: Icon(_showContact ? Icons.close : Icons.contact_mail),
-                      label: Text(_showContact ? 'Hide Contact' : 'Contact Me'),
-                      style:
-                      ElevatedButton.styleFrom(backgroundColor: coral),
-                    ),
-                  ]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Need help choosing?',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                const Text('Our team is here to help'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 200,
+                  child: NestPrimaryButton(
+                    text: _showContact ? "Hide Contact" : "Contact Me",
+                    onPressed: () => setState(() => _showContact = !_showContact),
+                  ),
+                ),
+              ]),
             ),
           ],
         ),
@@ -369,21 +392,19 @@ class _MembershipScreenState extends State<MembershipScreen> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: coral.withOpacity(0.3)),
         ),
-        child: Column(
-          children: [
-            Row(children: const [
-              Icon(Icons.email, color: coral, size: 20),
-              SizedBox(width: 12),
-              Text('membership@nest-hamburg.de'),
-            ]),
-            const SizedBox(height: 12),
-            Row(children: const [
-              Icon(Icons.phone, color: coral, size: 20),
-              SizedBox(width: 12),
-              Text('+49 40 1234 5678'),
-            ]),
-          ],
-        ),
+        child: Column(children: [
+          Row(children: const [
+            Icon(Icons.email, color: coral, size: 20),
+            SizedBox(width: 12),
+            Text('membership@nest-hamburg.de'),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: const [
+            Icon(Icons.phone, color: coral, size: 20),
+            SizedBox(width: 12),
+            Text('+49 40 1234 5678'),
+          ]),
+        ]),
       ),
     );
   }
@@ -411,30 +432,28 @@ class _MembershipScreenState extends State<MembershipScreen> {
                 offset: const Offset(0, 2)),
           ],
         ),
-        child: Row(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 40)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(subtitle,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: coral)),
-                  ]),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: grayText),
-          ],
-        ),
+        child: Row(children: [
+          Text(icon, style: const TextStyle(fontSize: 40)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(subtitle,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: coral)),
+                ]),
+          ),
+          const Icon(Icons.arrow_forward_ios, size: 16, color: grayText),
+        ]),
       ),
     );
   }
@@ -445,175 +464,245 @@ class _MembershipScreenState extends State<MembershipScreen> {
         ? {
       'title': '🏢 Corporate Pass',
       'subtitle': 'Team-Sharing Pass',
-      'text': 'For teams with several parents...'
+      'text': 'For teams with several parents...',
     }
         : {
       'title': '✈️ Expat Special',
       'subtitle': 'For Relocating Families',
-      'text': 'For families relocating to Hamburg...'
+      'text': 'For families relocating to Hamburg...',
     };
 
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(data['title'] ?? '',
-                style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            Text(data['subtitle'] ?? '',
-                style: const TextStyle(
-                    color: coral, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 16),
-            Text(data['text'] ?? ''),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: coral),
-              child: const Text('Close', style: TextStyle(color: Colors.white)),
-            )
-          ]),
-        ),
-      ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Text(data['title'] ?? '',
+                  style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 8),
+              Text(data['subtitle'] ?? '',
+                  style: const TextStyle(
+                      color: coral, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              Text(data['text'] ?? ''),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(backgroundColor: coral),
+                  child:
+                  const Text('Close', style: TextStyle(color: Colors.white)))
+            ]),
+          )),
     );
   }
+
   // ---------------------------------------------------------
   // BUILD METHOD
   // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: creamBackground,
+      backgroundColor: Colors.white, // white background
       body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: coral))
-            : SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ---------------------------------------------------
-              // HEADER
-              // ---------------------------------------------------
-              Padding(
-                padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Banner
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              color: coral,
+              child: const Center(
+                child: Text(
+                  '2 weeks free trial for early members with the Code OPEN26',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                  child: CircularProgressIndicator(color: coral))
+                  : SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Image.asset('assets/images/nest_logo.png', height: 90),
+                    // ---------------------------------------------
+                    // HEADER
+                    // ---------------------------------------------
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Image.asset('assets/images/nest_logo.png',
+                              height: 90),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Membership Options',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Find the perfect fit for your family',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: secondaryText),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ---------------------------------------------
+                    // MEMBERSHIP CAROUSEL
+                    // ---------------------------------------------
+                    SizedBox(
+                      height: 520,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: memberships.length,
+                        itemBuilder: (context, index) {
+                          final m = memberships[index];
+                          final active = index == _currentPage;
+
+                          return AnimatedScale(
+                            scale: active ? 1.0 : 0.9,
+                            duration:
+                            const Duration(milliseconds: 300),
+                            child: _buildMembershipCard(m, active),
+                          );
+                        },
+                      ),
+                    ),
+
                     const SizedBox(height: 20),
-                    Text(
-                      'Membership Options',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
+
+                    // ---------------------------------------------
+                    // PAGE DOTS
+                    // ---------------------------------------------
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        memberships.length,
+                            (index) => Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 4),
+                          width: _currentPage == index ? 20 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _currentPage == index
+                                ? coral
+                                : grayText.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Find the perfect fit for your family',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: secondaryText),
+
+                    const SizedBox(height: 40),
+
+                    // ---------------------------------------------
+                    // PASS HEADER
+                    // ---------------------------------------------
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          Text(
+                            'For those who thrive maximum flexibility',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Great for first-timers, testers and parents easing into a new routine',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: secondaryText),
+                          ),
+                        ],
+                      ),
                     ),
+
+                    const SizedBox(height: 10),
+
+                    // PASS CAROUSEL
+                    SizedBox(
+                      height: 520,
+                      child: PageView.builder(
+                        controller: PageController(viewportFraction: 0.85),
+                        itemCount: passes.length,
+                        itemBuilder: (context, index) {
+                          final m = passes[index];
+                          return AnimatedScale(
+                            scale: 1.0,
+                            duration:
+                            const Duration(milliseconds: 300),
+                            child: _buildMembershipCard(m, true),
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // B2B SECTION
+                    _buildB2BSection(),
+
+                    const SizedBox(height: 40),
+
+                    // CONTACT SECTION
+                    _buildContactSection(),
+                    if (_showContact) _buildContactInfo(),
+
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
-
-              // ---------------------------------------------------
-              // CAROUSEL (PageView)
-              // ---------------------------------------------------
-              SizedBox(
-                height: 450,        // slightly taller for image alignment
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: memberships.length,
-                  itemBuilder: (context, index) {
-                    final m = memberships[index];
-                    final active = index == _currentPage;
-
-                    return AnimatedScale(
-                      scale: active ? 1.0 : 0.9,
-                      duration: const Duration(milliseconds: 300),
-                      child: _buildMembershipCard(m, active),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ---------------------------------------------------
-              // PAGE INDICATOR DOTS
-              // ---------------------------------------------------
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  memberships.length,
-                      (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentPage == index ? 20 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _currentPage == index
-                          ? coral
-                          : grayText.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // ---------------------------------------------------
-              // B2B SECTION (VISIBLE AGAIN)
-              // ---------------------------------------------------
-              _buildB2BSection(),
-
-              const SizedBox(height: 40),
-
-              // ---------------------------------------------------
-              // CONTACT SECTION
-              // ---------------------------------------------------
-              _buildContactSection(),
-
-              if (_showContact) _buildContactInfo(),
-
-              const SizedBox(height: 40),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
   // ---------------------------------------------------------
   // MEMBERSHIP CARD
   // ---------------------------------------------------------
   Widget _buildMembershipCard(Map<String, dynamic> m, bool active) {
     final bool isPass = m['isPass'];
-    final String buttonText = isPass ? 'Zum Angebot' : 'Subscribe';
+    final String buttonText =
+    isPass ? "Let's try" : "Let's subscribe";
 
-    // Fine-grained alignment per image
     Alignment imgAlign;
     switch (m['title'].toString().toLowerCase()) {
       case 'regular membership':
-        imgAlign = const Alignment(-0.6, -0.5); // shift up & left (face visible)
+        imgAlign = const Alignment(-0.6, -0.5);
         break;
       case 'full membership':
-        imgAlign = const Alignment(0.6, 0.1);   // shift right
+        imgAlign = const Alignment(0.6, 0.1);
         break;
       case 'flexi-pass':
-        imgAlign = const Alignment(-0.6, 0.0);  // shift left
+        imgAlign = const Alignment(-0.6, 0.0);
         break;
       case 'part-time membership':
-        imgAlign = const Alignment(-0.4, 0.0);  // slightly left
+        imgAlign = const Alignment(-0.4, 0.0);
         break;
       case 'day pass':
-        imgAlign = const Alignment(0.0, -0.4);  // shift upward
+        imgAlign = const Alignment(0.0, -0.4);
         break;
       case 'light membership':
-        imgAlign = Alignment.center;            // already well-centered
+        imgAlign = Alignment.center;
         break;
       default:
         imgAlign = Alignment.center;
@@ -632,13 +721,11 @@ class _MembershipScreenState extends State<MembershipScreen> {
           ),
         ],
       ),
-
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // IMAGE HEADER
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(18)),
             child: Image.asset(
               m['image'],
               height: 180,
@@ -648,51 +735,75 @@ class _MembershipScreenState extends State<MembershipScreen> {
             ),
           ),
 
-          // CARD CONTENT
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // TITLE
-                Text(
-                  '${m['emoji']}  ${m['title']}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${m['emoji']}  ${m['title']}',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
 
-                const SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
-                // PRICE
-                Text(
-                  'From ${m['priceHour']} € / hour',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    'From ${m['priceHour']} € / hour',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
 
-                const SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
-                // SHORT DESC
-                Text(
-                  m['shortDesc'] ?? '',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  Text(
+                    m['shortDesc'] ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
 
-                const SizedBox(height: 16),
+                  if (m['bullets'] != null && m['bullets'].isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: m['bullets'].map<Widget>((b) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("• ",
+                                  style: TextStyle(fontSize: 15)),
+                              Expanded(
+                                child: Text(
+                                  b,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
 
-                // BUTTON
-                NestPrimaryButton(
-                  text: buttonText,
-                  onPressed: () => isPass
-                      ? _showPassOffer(m)
-                      : _showSubscriptionDialog(m),
-                ),
-              ],
+                  const Spacer(),
+
+                  Center(
+                    child: SizedBox(
+                      width: 200,
+                      child: NestPrimaryButton(
+                        text: buttonText,
+                        onPressed: () => isPass
+                            ? _showPassOffer(m)
+                            : _showSubscriptionDialog(m),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                ],
+              ),
             ),
           ),
         ],

@@ -1,14 +1,17 @@
-// VOLLSTÄNDIG ERSETZEN: lib/features/auth/login_screen.dart
+// lib/features/auth/login_screen.dart
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nest_app/core/theme/app_theme.dart';
+import 'package:nest_app/widgets/nest_button.dart';
 
 final supabase = Supabase.instance.client;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -16,6 +19,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _isPasswordVisible = false;
   bool _agreeToTerms = false;
   bool _isLoading = false;
@@ -29,21 +33,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _shouldShowTerms = !(prefs.getBool('hasAcceptedTerms') ?? false);
-    });
+    _shouldShowTerms = !(prefs.getBool('hasAcceptedTerms') ?? false);
+    if (mounted) setState(() {});
   }
 
   Future<void> _handleLogin() async {
     if (_isLoading || !mounted) return;
-    final isFormValid = _shouldShowTerms ? _agreeToTerms : true;
-    if (!isFormValid) {
-      _showSnackbar('Please agree to the Terms & Conditions.', isError: true);
+
+    final isValid = _shouldShowTerms ? _agreeToTerms : true;
+
+    if (!isValid) {
+      _showSnackbar("Please agree to the Terms & Conditions.", isError: true);
       return;
     }
-    setState(() => _isLoading = true);
 
-    print("--- VERSUCHE LOGIN für: ${_emailController.text} ---");
+    setState(() => _isLoading = true);
 
     try {
       final response = await supabase.auth.signInWithPassword(
@@ -51,28 +55,44 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
 
-      if (response.session != null) {
-        // --- DIESE ZEILE IST JETZT KORRIGIERT ---
-        print("--- LOGIN ERFOLGREICH! User-ID: ${response.session!.user.id} ---");
-        print("--- Auth-Stream sollte jetzt reagieren. Warte auf Navigation... ---");
-      }
-
-      if (mounted && _shouldShowTerms) {
+      if (response.session != null && _shouldShowTerms) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('hasAcceptedTerms', true);
       }
-    } on AuthException catch (error) {
-      print("--- AUTH-FEHLER: ${error.message} ---");
-      if (mounted) _showSnackbar(error.message, isError: true);
-    } catch (error) {
-      print("--- UNBEKANNTER FEHLER: $error ---");
-      if (mounted) _showSnackbar('An unexpected error occurred.', isError: true);
+    } on AuthException catch (e) {
+      _showSnackbar(e.message, isError: true);
+    } catch (_) {
+      _showSnackbar("An unexpected error occurred.", isError: true);
     }
 
     if (mounted) setState(() => _isLoading = false);
   }
 
-  // Der Rest der Datei bleibt gleich
+  void _showSnackbar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor:
+        isError ? Theme.of(context).colorScheme.error : Colors.green,
+      ),
+    );
+  }
+
+  void _handleSignUp() {
+    showDialog(
+      context: context,
+      builder: (_) => SignUpDialog(onResult: _showSnackbar),
+    );
+  }
+
+  void _handleForgotPassword() {
+    showDialog(
+      context: context,
+      builder: (_) => ForgotPasswordDialog(onResult: _showSnackbar),
+    );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -80,58 +100,250 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showSnackbar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green));
-  }
-
-  void _handleSignUp() {
-    showDialog(context: context, builder: (context) => SignUpDialog(onResult: _showSnackbar));
-  }
-
-  void _handleForgotPassword() {
-    showDialog(context: context, builder: (context) => ForgotPasswordDialog(onResult: _showSnackbar));
-  }
-
-  static const Color buttonColor = Color(0xFF87A981);
-  static const Color primaryTextColor = Color(0xFF4A4A4A);
-  static const Color secondaryTextColor = Color(0xFF8A8A8A);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 60),
-                Image.asset('assets/images/nest_logo.png', height: 100),
-                const SizedBox(height: 40),
-                Column(children: [const Text('WELCOME TO NEST', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryTextColor)), const SizedBox(height: 8), const Text('Your collaborative workspace', style: TextStyle(fontSize: 16, color: secondaryTextColor))]),
-                const SizedBox(height: 32),
-                TextField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: 'Email', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
-                const SizedBox(height: 16),
-                TextField(controller: _passwordController, obscureText: !_isPasswordVisible, decoration: InputDecoration(labelText: 'Password', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), suffixIcon: IconButton(icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible)))),
-                if (_shouldShowTerms) const SizedBox(height: 16),
-                if (_shouldShowTerms) Row(children: [Checkbox(value: _agreeToTerms, onChanged: (value) => setState(() => _agreeToTerms = value ?? false)), Expanded(child: RichText(text: TextSpan(style: TextStyle(fontSize: 14, color: secondaryTextColor), children: [const TextSpan(text: 'I agree to the '), TextSpan(text: 'Terms & Conditions', style: const TextStyle(decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () {}), const TextSpan(text: ' and '), TextSpan(text: 'Privacy Policy', style: const TextStyle(decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () {})])))]) ,
-                const SizedBox(height: 24),
-                ElevatedButton(onPressed: _isLoading ? null : _handleLogin, style: ElevatedButton.styleFrom(backgroundColor: buttonColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _isLoading ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)) : const Text('LOG IN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
-                const SizedBox(height: 24),
-                Column(children: [RichText(text: TextSpan(style: TextStyle(fontSize: 14, color: secondaryTextColor), children: [const TextSpan(text: "Don't have an account? "), TextSpan(text: 'Sign Up', style: const TextStyle(fontWeight: FontWeight.bold, color: buttonColor), recognizer: TapGestureRecognizer()..onTap = _handleSignUp)])), const SizedBox(height: 16), GestureDetector(onTap: _handleForgotPassword, child: const Text('Forgot Password?', style: TextStyle(fontSize: 14, color: secondaryTextColor, decoration: TextDecoration.underline)))]),
-                const SizedBox(height: 40),
-              ],
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            children: [
+              const SizedBox(height: 60),
+
+              Image.asset(
+                'assets/images/nest_logo.png',
+                height: 95,
+              ),
+
+              const SizedBox(height: 32),
+
+              const Text(
+                'WELCOME TO NEST',
+                style: TextStyle(
+                  fontFamily: 'SweetAndSalty',
+                  fontSize: 32,
+                  color: AppTheme.darkText,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              const Text(
+                'Your collaborative workspace',
+                style: TextStyle(
+                  fontFamily: 'CharlevoixPro',
+                  fontSize: 16,
+                  color: AppTheme.secondaryText,
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              _buildFloatingInput(
+                controller: _emailController,
+                label: "Email",
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildFloatingInput(
+                controller: _passwordController,
+                label: "Password",
+                obscure: !_isPasswordVisible,
+                suffix: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () =>
+                      setState(() => _isPasswordVisible = !_isPasswordVisible),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              if (_shouldShowTerms) _buildTnC(),
+
+              const SizedBox(height: 24),
+
+              Center(
+                child: SizedBox(
+                  width: 200,   // << MATCHES MEMBERSHIP BUTTON EXACTLY
+                  child: NestPrimaryButton(
+                    text: "LOG IN",
+                    backgroundColor: const Color(0xFFB2E5D1),
+                    textColor: Colors.white,
+                    onPressed: () {
+                      if (_isLoading) return;
+                      _handleLogin();
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              _buildSignupText(),
+
+              const SizedBox(height: 16),
+
+              GestureDetector(
+                onTap: _handleForgotPassword,
+                child: const Text(
+                  "Forgot Password?",
+                  style: TextStyle(
+                    decoration: TextDecoration.underline,
+                    fontFamily: 'CharlevoixPro',
+                    color: AppTheme.darkText,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 60),
+            ],
           ),
         ),
       ),
     );
   }
+
+  /// FLOATING INPUT FIELD
+  Widget _buildFloatingInput({
+    required TextEditingController controller,
+    required String label,
+    bool obscure = false,
+    Widget? suffix,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        style: const TextStyle(
+          fontFamily: 'CharlevoixPro',
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            fontFamily: 'CharlevoixPro',
+            fontSize: 16,
+            color: Colors.grey,
+          ),
+          floatingLabelStyle: const TextStyle(
+            fontFamily: 'CharlevoixPro',
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.darkText,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          suffixIcon: suffix,
+        ),
+      ),
+    );
+  }
+
+  /// TERMS
+  Widget _buildTnC() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Checkbox(
+            value: _agreeToTerms,
+            onChanged: (value) =>
+                setState(() => _agreeToTerms = value ?? false),
+          ),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  fontFamily: 'CharlevoixPro',
+                  fontSize: 14,
+                  color: AppTheme.secondaryText,
+                  height: 1.4,
+                ),
+                children: [
+                  const TextSpan(text: "I agree to the "),
+                  TextSpan(
+                    text: "Terms & Conditions",
+                    style: const TextStyle(
+                      decoration: TextDecoration.underline,
+                      color: AppTheme.darkText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    recognizer: TapGestureRecognizer()..onTap = () {},
+                  ),
+                  const TextSpan(text: " and "),
+                  TextSpan(
+                    text: "Privacy Policy",
+                    style: const TextStyle(
+                      decoration: TextDecoration.underline,
+                      color: AppTheme.darkText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    recognizer: TapGestureRecognizer()..onTap = () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// SIGNUP TEXT
+  Widget _buildSignupText() {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontFamily: 'CharlevoixPro',
+          fontSize: 14,
+          color: AppTheme.secondaryText,
+        ),
+        children: [
+          const TextSpan(text: "Don't have an account? "),
+          TextSpan(
+            text: 'Sign Up',
+            style: const TextStyle(
+              fontFamily: 'CharlevoixPro',
+              fontWeight: FontWeight.bold,
+              color: AppTheme.bookingButtonColor,
+            ),
+            recognizer: TapGestureRecognizer()..onTap = _handleSignUp,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// Dialog-Widgets...
+//
+// -----------------------------------------------------
+// SIGN UP DIALOG (restored)
+// -----------------------------------------------------
+//
+
 class SignUpDialog extends StatefulWidget {
   final Function(String message, {bool isError}) onResult;
   const SignUpDialog({super.key, required this.onResult});
@@ -157,19 +369,28 @@ class _SignUpDialogState extends State<SignUpDialog> {
 
   Future<void> _performSignUp() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+
     try {
-      await supabase.auth.signUp(email: _emailController.text.trim(), password: _passwordController.text.trim());
+      await supabase.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
       if (mounted) {
-        Navigator.of(context).pop();
-        widget.onResult('Success! Please check your email to confirm your account.', isError: false);
+        Navigator.pop(context);
+        widget.onResult(
+          'Success! Please check your email to confirm your account.',
+          isError: false,
+        );
       }
-    } on AuthException catch (error) {
-      if (mounted) {
-        Navigator.of(context).pop();
-        widget.onResult(error.message, isError: true);
-      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onResult(e.message, isError: true);
     }
+
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -177,20 +398,53 @@ class _SignUpDialogState extends State<SignUpDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Create Account'),
-      content: Form(key: _formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress, validator: (v) => (v == null || !v.contains('@')) ? 'Please enter a valid email' : null),
-        const SizedBox(height: 8),
-        TextFormField(controller: _passwordController, decoration: const InputDecoration(labelText: 'Password'), obscureText: true, validator: (v) => (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null),
-        const SizedBox(height: 8),
-        TextFormField(controller: _confirmPasswordController, decoration: const InputDecoration(labelText: 'Confirm Password'), obscureText: true, validator: (v) => v != _passwordController.text ? 'Passwords do not match' : null),
-      ])),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+              validator: (v) =>
+              v != null && v.contains('@') ? null : 'Enter a valid email',
+            ),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+              validator: (v) =>
+              v != null && v.length >= 6 ? null : 'Min. 6 characters',
+            ),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
+              validator: (v) =>
+              v == _passwordController.text ? null : 'Passwords do not match',
+            ),
+          ],
+        ),
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        ElevatedButton(onPressed: _isLoading ? null : _performSignUp, child: _isLoading ? const CircularProgressIndicator() : const Text('Sign Up')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _performSignUp,
+          child:
+          _isLoading ? const CircularProgressIndicator() : const Text('Sign Up'),
+        ),
       ],
     );
   }
 }
+
+//
+// -----------------------------------------------------
+// FORGOT PASSWORD DIALOG (restored)
+// -----------------------------------------------------
+//
 
 class ForgotPasswordDialog extends StatefulWidget {
   final Function(String message, {bool isError}) onResult;
@@ -213,19 +467,27 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
 
   Future<void> _sendResetLink() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+
     try {
-      await supabase.auth.resetPasswordForEmail(_emailController.text.trim());
+      await supabase.auth.resetPasswordForEmail(
+        _emailController.text.trim(),
+      );
+
       if (mounted) {
-        Navigator.of(context).pop();
-        widget.onResult('Success! A password reset link has been sent.', isError: false);
+        Navigator.pop(context);
+        widget.onResult(
+          'Success! A password reset link has been sent.',
+          isError: false,
+        );
       }
-    } on AuthException catch (error) {
-      if (mounted) {
-        Navigator.of(context).pop();
-        widget.onResult(error.message, isError: true);
-      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onResult(e.message, isError: true);
     }
+
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -233,14 +495,31 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Reset Password'),
-      content: Form(key: _formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('Enter your email to receive a password reset link.'),
-        const SizedBox(height: 16),
-        TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress, validator: (v) => (v == null || !v.contains('@')) ? 'Please enter a valid email' : null),
-      ])),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter your email to receive a reset link.'),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+              validator: (v) =>
+              v != null && v.contains('@') ? null : 'Enter a valid email',
+            ),
+          ],
+        ),
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        ElevatedButton(onPressed: _isLoading ? null : _sendResetLink, child: _isLoading ? const CircularProgressIndicator() : const Text('Send Link')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _sendResetLink,
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Send Link'),
+        ),
       ],
     );
   }

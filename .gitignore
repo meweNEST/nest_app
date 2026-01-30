@@ -55,3 +55,24 @@ app.*.map.json
 
 # Flutter build files
 .flutter-plugins-dependencies
+
+# --- Added for this project (build / generated files) ---
+
+# Flutter plugins (some tools create numbered variants)
+.flutter-plugins
+.flutter-plugins-dependencies*
+.flutter-plugins-dependencies *
+
+# Android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+
+# iOS generated + pods
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated*.xcconfig
+ios/Flutter/flutter_export_environment*.sh
+ios/Flutter/Flutter*.podspec
+*.xcconfig
+*.podspec
