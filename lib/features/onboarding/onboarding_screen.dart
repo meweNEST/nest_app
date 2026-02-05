@@ -1,6 +1,7 @@
 // lib/features/onboarding/onboarding_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:nest_app/widgets/nest_button.dart';
 import '../../core/theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -40,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'Goodbye isolation! Meet other parents who share your rhythm, struggles, goals and values.\nWork, chat, learn, breathe – together.',
     },
     {
-      'image': 'assets/images/onboarding_5.png', // Your transparent image
+      'image': 'assets/images/onboarding_5.png',
       'title': 'Grow Together',
       'text':
       'Join us for classes and events tailored to you and your family! Or relax and connect in our Family Café that caters to big and small humans alike.',
@@ -52,7 +53,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isLast = _pageIndex == _slides.length - 1;
 
     return Scaffold(
-      backgroundColor: AppTheme.creamBackground,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -65,49 +66,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
 
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // IMAGE
-                      Image.asset(
-                        slide['image']!,
-                        height: 260,
-                        fit: BoxFit.contain,
-                      ),
+                  return Container(
+                    color: Colors.white,
+                    child: Stack(
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(height: index == 0 ? 0 : 140),
 
-                      const SizedBox(height: 40),
+                            Image.asset(
+                              slide['image']!,
+                              height: 260,
+                              fit: BoxFit.contain,
+                            ),
 
-                      // HEADLINE (SweetAndSalty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          slide['title']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'SweetAndSalty',
-                            fontSize: 30,
-                            color: AppTheme.darkText,
-                          ),
+                            const SizedBox(height: 40),
+
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              child: Text(
+                                slide['title']!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'SweetAndSalty',
+                                  fontSize: 30,
+                                  color: AppTheme.darkText,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              child: Text(
+                                slide['text']!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'CharlevoixPro',
+                                  fontSize: 16,
+                                  height: 1.5,
+                                  color: AppTheme.darkText,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
 
-                      const SizedBox(height: 16),
-
-                      // TEXT (Charlevoix)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          slide['text']!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'CharlevoixPro',
-                            fontSize: 16,
-                            height: 1.5,
-                            color: AppTheme.darkText,
+                        if (index != 0)
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 60),
+                                Image.asset(
+                                  'assets/images/nest_logo.png',
+                                  height: 95,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ),
@@ -117,34 +140,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Container(
               height: 110,
               padding: const EdgeInsets.symmetric(horizontal: 24),
+              color: Colors.white,
               child: isLast
                   ? Center(
-                child: ElevatedButton(
-                  onPressed: widget.onFinished,
-                  style: ElevatedButton.styleFrom(
+                // ✅ ONLY CHANGE: swap ElevatedButton -> NestPrimaryButton
+                child: SizedBox(
+                  width: 200, // matches your other screens' button sizing
+                  child: NestPrimaryButton(
+                    text: 'Get Started',
                     backgroundColor: AppTheme.bookingButtonColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 32,
-                    ),
-                  ),
-                  child: const Text(
-                    'Get Started',
-                    style: TextStyle(
-                      fontFamily: 'CharlevoixPro',
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
+                    textColor: Colors.white,
+                    onPressed: widget.onFinished,
                   ),
                 ),
               )
                   : Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // SKIP BUTTON
                   TextButton(
                     onPressed: widget.onFinished,
                     child: const Text(
@@ -156,8 +168,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-
-                  // DOTS
                   Row(
                     children: List.generate(
                       _slides.length,
@@ -175,8 +185,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-
-                  // NEXT ARROW
                   IconButton(
                     icon: const Icon(Icons.arrow_forward),
                     onPressed: () => _controller.nextPage(

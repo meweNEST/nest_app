@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nest_app/core/theme/app_theme.dart';
+import 'package:nest_app/widgets/nest_app_bar.dart';
 import 'package:nest_app/widgets/nest_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,20 +20,16 @@ class _CafeScreenState extends State<CafeScreen> {
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> items = [];
 
-  // Default: no category selected => show all items
   int? selectedCategoryId;
 
   final Map<int, int> cart = {};
   bool _loading = true;
 
-  // Allergen filter state: selecting allergens HIDES items containing them
   final Set<String> _selectedAllergenFilters = {};
 
-  // Catchy/optimistic feedback (pulse)
   double _cartFabScale = 1.0;
   Timer? _fabPulseTimer;
 
-  // For clickable category scroll arrows
   final ScrollController _categoryScrollController = ScrollController();
   bool _showLeftArrow = false;
   bool _showRightArrow = false;
@@ -53,15 +50,37 @@ class _CafeScreenState extends State<CafeScreen> {
     super.dispose();
   }
 
+  Future<void> _confirmAndLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout?', style: TextStyle(fontFamily: 'SweetAndSalty')),
+        content: const Text('Are you sure you want to log out?', style: TextStyle(fontFamily: 'CharlevoixPro')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Logout', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          ),
+        ],
+      ),
+    ) ??
+        false;
+
+    if (!ok) return;
+
+    await supabase.auth.signOut();
+    if (!mounted) return;
+    Navigator.of(context).popUntil((r) => r.isFirst);
+  }
+
   Future<void> _loadCafeData() async {
     try {
-      final categoryResponse = await supabase
-          .from('cafe_categories')
-          .select()
-          .order('display_order');
-
-      final itemsResponse =
-      await supabase.from('cafe_items').select().order('id');
+      final categoryResponse = await supabase.from('cafe_categories').select().order('display_order');
+      final itemsResponse = await supabase.from('cafe_items').select().order('id');
 
       setState(() {
         categories = List<Map<String, dynamic>>.from(categoryResponse);
@@ -71,6 +90,7 @@ class _CafeScreenState extends State<CafeScreen> {
 
       WidgetsBinding.instance.addPostFrameCallback((_) => _updateCategoryArrows());
     } catch (e) {
+      // ignore: avoid_print
       print('Error loading cafe data: $e');
       if (!mounted) return;
       setState(() => _loading = false);
@@ -84,8 +104,7 @@ class _CafeScreenState extends State<CafeScreen> {
     final canScroll = pos.maxScrollExtent > 0;
 
     final showLeft = canScroll && _categoryScrollController.offset > 2;
-    final showRight =
-        canScroll && _categoryScrollController.offset < pos.maxScrollExtent - 2;
+    final showRight = canScroll && _categoryScrollController.offset < pos.maxScrollExtent - 2;
 
     if (showLeft != _showLeftArrow || showRight != _showRightArrow) {
       setState(() {
@@ -116,10 +135,8 @@ class _CafeScreenState extends State<CafeScreen> {
 
   List<Map<String, dynamic>> get filteredItems {
     final base = _baseItems;
-
     if (_selectedAllergenFilters.isEmpty) return base;
 
-    // Avoidance filter: hide items that contain selected allergens
     return base.where((item) {
       final allergens = _effectiveAllergensForItem(item).toSet();
       return allergens.intersection(_selectedAllergenFilters).isEmpty;
@@ -165,23 +182,15 @@ class _CafeScreenState extends State<CafeScreen> {
   List<String> _stringListFromAny(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) {
-      return raw
-          .map((e) => e.toString().trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+      return raw.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
     }
     if (raw is String) {
-      return raw
-          .split(',')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+      return raw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
     }
     return [];
   }
 
-  String _normalizeTag(String s) =>
-      s.trim().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_');
+  String _normalizeTag(String s) => s.trim().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_');
 
   String _canonicalAllergenKey(String key) {
     final k = _normalizeTag(key);
@@ -205,7 +214,6 @@ class _CafeScreenState extends State<CafeScreen> {
 
     final id = (item['id'] as int?) ?? 0;
 
-    // Note: no "wheat" (merged into gluten), and no sesame in fake pool
     const pool = <String>[
       'milk',
       'eggs',
@@ -265,7 +273,6 @@ class _CafeScreenState extends State<CafeScreen> {
     'nuts': {'emoji': '🌰', 'label': 'Nuts'},
     'soy': {'emoji': '🌱', 'label': 'Soy'},
     'gluten': {'emoji': '🌾', 'label': 'Gluten / Wheat'},
-    // sesame can exist on items, but you removed it from filters
     'sesame': {'emoji': '⚪', 'label': 'Sesame'},
     'fish': {'emoji': '🐟', 'label': 'Fish'},
     'shellfish': {'emoji': '🦐', 'label': 'Shellfish / Crustaceans'},
@@ -586,17 +593,11 @@ class _CafeScreenState extends State<CafeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text(
-                'Review order',
-                style: TextStyle(fontFamily: 'CharlevoixPro'),
-              ),
+              child: const Text('Review order', style: TextStyle(fontFamily: 'CharlevoixPro')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'I understand',
-                style: TextStyle(fontFamily: 'CharlevoixPro'),
-              ),
+              child: const Text('I understand', style: TextStyle(fontFamily: 'CharlevoixPro')),
             ),
           ],
         );
@@ -605,7 +606,6 @@ class _CafeScreenState extends State<CafeScreen> {
         false;
   }
 
-  // Draw a subtle diagonal slash over the emoji when selected (avoidance mode)
   Widget _crossedEmoji(String emoji, {required bool crossed}) {
     return SizedBox(
       width: 22,
@@ -690,7 +690,6 @@ class _CafeScreenState extends State<CafeScreen> {
     );
   }
 
-  // ✅ FIX: define _cartFab (your build calls it)
   Widget _cartFab() {
     return AnimatedScale(
       scale: _cartFabScale,
@@ -708,8 +707,6 @@ class _CafeScreenState extends State<CafeScreen> {
     );
   }
 
-  // ---------- UI ----------
-
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -722,7 +719,6 @@ class _CafeScreenState extends State<CafeScreen> {
 
     final bottomListPadding = cart.isEmpty ? 16.0 : 110.0;
 
-    // Sesame removed from FILTERS
     const allergenFilterKeys = <String>[
       'milk',
       'eggs',
@@ -734,6 +730,18 @@ class _CafeScreenState extends State<CafeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // ✅ unified responsive logo AppBar
+      appBar: NestAppBar(
+        actions: [
+          IconButton(
+            tooltip: 'Logout',
+            icon: const Icon(Icons.logout, color: AppTheme.darkText),
+            onPressed: _confirmAndLogout,
+          ),
+        ],
+      ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
@@ -753,11 +761,10 @@ class _CafeScreenState extends State<CafeScreen> {
         ),
       ),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
-            const SizedBox(height: 20),
-            Image.asset('assets/images/nest_logo.png', height: 80),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             const Text(
               'Nest Café',
               style: TextStyle(
@@ -824,7 +831,7 @@ class _CafeScreenState extends State<CafeScreen> {
 
             const SizedBox(height: 14),
 
-            // CATEGORY CHIPS with arrows; hide arrows when you can't scroll that way
+            // CATEGORY CHIPS with arrows
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
@@ -1047,6 +1054,8 @@ class _CafeScreenState extends State<CafeScreen> {
   }
 
   void _showCartModal(BuildContext context) {
+    // unchanged from your version
+    // (keeping your existing implementation)
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1164,7 +1173,6 @@ class _CafeScreenState extends State<CafeScreen> {
                         final ok = await _showCheckoutAllergenWarning();
                         if (!ok) return;
 
-                        // Next step: checkout bottom sheet
                         if (context.mounted) Navigator.pop(context);
                       },
                     )
@@ -1179,7 +1187,6 @@ class _CafeScreenState extends State<CafeScreen> {
   }
 }
 
-// Painter for the diagonal “cross-out” line
 class _DiagonalSlashPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;

@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../models/booking_models.dart'; // WICHTIG: Der neue, zentrale Import
+import '../models/booking_models.dart';
 
 class CalendarWidget extends StatelessWidget {
-  // DIE LOKALE ENUM-DEFINITION IST JETZT ENTFERNT.
-
   final DateTime selectedDate;
   final Function(DateTime) onDateSelected;
   final Map<DateTime, OccupancyStatus> occupancyMap;
@@ -24,17 +22,25 @@ class CalendarWidget extends StatelessWidget {
     required this.isDayEnabled,
   });
 
+  // ✅ NEW: Your exact colors
+  static const Color _dayGreen = Color(0xFFB2E5D1); // 0–50%
+  static const Color _dayOrange = Color(0xFFFFBD59); // 50–99%
+  static const Color _dayRed = Color(0xFFFF5757); // 100%
+
   Color _getOccupancyColor(OccupancyStatus? status) {
     switch (status) {
       case OccupancyStatus.low:
-      // 'empty' gibt es in unserem zentralen Enum nicht mehr, wir behandeln es wie 'low'
-        return Colors.green.shade100;
+        return _dayGreen;
+
+    // We treat both as "busy" (50–99%) to be safe,
+    // even if 'high' is not used by your current logic.
       case OccupancyStatus.medium:
-        return Colors.orange.shade100;
       case OccupancyStatus.high:
-        return Colors.red.shade100;
+        return _dayOrange;
+
       case OccupancyStatus.full:
-        return Colors.red.shade100.withOpacity(0.5);
+        return _dayRed;
+
       default:
         return Colors.transparent;
     }
@@ -65,7 +71,7 @@ class CalendarWidget extends StatelessWidget {
         todayDecoration: const BoxDecoration(color: Colors.transparent, shape: BoxShape.circle),
         todayTextStyle: const TextStyle(color: Colors.black),
         selectedDecoration: BoxDecoration(
-          color: Colors.blue.shade200,
+          color: Colors.blueAccent.withOpacity(0.12),
           shape: BoxShape.circle,
           border: Border.all(color: AppTheme.sageGreen, width: 2),
         ),
@@ -83,21 +89,33 @@ class CalendarWidget extends StatelessWidget {
                 color: _getOccupancyColor(status),
                 shape: BoxShape.circle,
               ),
-              child: Center(child: Text(day.day.toString(), style: const TextStyle(color: Colors.black))),
+              child: Center(
+                child: Text(
+                  day.day.toString(),
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
             );
           }
           return null;
         },
         selectedBuilder: (context, day, focusedDay) {
           final status = occupancyMap[DateTime(day.year, day.month, day.day)];
+          final baseColor = _getOccupancyColor(status);
+
           return Container(
             margin: const EdgeInsets.all(4.0),
             decoration: BoxDecoration(
-              color: _getOccupancyColor(status).withOpacity(0.7),
+              color: baseColor == Colors.transparent ? Colors.blueAccent.withOpacity(0.12) : baseColor.withOpacity(0.75),
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.sageGreen, width: 2),
             ),
-            child: Center(child: Text(day.day.toString(), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+            child: Center(
+              child: Text(
+                day.day.toString(),
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              ),
+            ),
           );
         },
       ),

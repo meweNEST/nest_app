@@ -3,9 +3,6 @@ import 'package:nest_app/core/theme/app_theme.dart';
 import 'package:nest_app/widgets/nest_button.dart';
 import '../main/main_screen.dart';
 
-const Text(
-'HELLO THIS IS NEW LOGIN UI',
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -42,6 +39,48 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ✅ NEW: Continue as guest (with popup)
+  Future<void> _continueAsGuest() async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Continue as guest?',
+          style: TextStyle(fontFamily: 'SweetAndSalty'),
+        ),
+        content: const Text(
+          'You can explore the schedule and map, but you can’t book without an account.\n\n'
+              'You can log in or register anytime.',
+          style: TextStyle(fontFamily: 'CharlevoixPro'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text(
+              'Back to login',
+              style: TextStyle(fontFamily: 'CharlevoixPro'),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text(
+              'Continue',
+              style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    ) ??
+        false;
+
+    if (!proceed) return;
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const MainScreen()),
+    );
+  }
+
   void _goToSignup() {
     // TODO: add your sign‑up navigation
   }
@@ -67,7 +106,6 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-
               const SizedBox(height: 40),
 
               // LOGO
@@ -167,13 +205,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         color: Colors.grey,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                 ),
@@ -186,8 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Checkbox(
                     value: _acceptedTerms,
-                    onChanged: (value) =>
-                        setState(() => _acceptedTerms = value ?? false),
+                    onChanged: (value) => setState(() => _acceptedTerms = value ?? false),
                   ),
                   Expanded(
                     child: Wrap(
@@ -253,6 +287,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   text: 'LOG IN',
                   onPressed: _login,
                   backgroundColor: AppTheme.sageGreen,
+                ),
+              ),
+
+              // ✅ NEW: CONTINUE AS GUEST BUTTON
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: NestPrimaryButton(
+                  text: 'CONTINUE AS GUEST',
+                  onPressed: _continueAsGuest,
+                  backgroundColor: Colors.white,
+                  hoverColor: const Color(0xFFF2F2F2),
+                  textColor: AppTheme.darkText,
                 ),
               ),
 

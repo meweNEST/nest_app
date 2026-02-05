@@ -1,4 +1,4 @@
-// NEUE DATEI: lib/features/booking/models/booking_models.dart
+// lib/features/booking/models/booking_models.dart
 
 import 'package:flutter/material.dart';
 

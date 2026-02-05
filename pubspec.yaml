@@ -16,6 +16,7 @@ dependencies:
   table_calendar: ^3.0.9
   flutter_stripe: ^12.2.0
   http: ^1.1.0 # <-- We need this for the backend calls to Stripe API
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

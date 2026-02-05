@@ -13,21 +13,28 @@ import 'features/main/main_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'screens/update_password_screen.dart';
 
+// Routes
+import 'features/cafe/cafe_screen.dart';
+
+// ✅ Add membership route
+// If your file is elsewhere, adjust this import:
+import 'features/membership/membership_screen.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ⭐ Load .env ONLY on mobile — and load it manually (not as an asset)
+  // Load .env ONLY on mobile — and load it manually (not as an asset)
   if (!kIsWeb) {
     await dotenv.load(fileName: ".env");
   }
 
-  // ⭐ Initialize Supabase
+  // Initialize Supabase
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
 
-  // ⭐ Initialize Stripe (mobile only)
+  // Initialize Stripe (mobile only)
   if (!kIsWeb) {
     final publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
     if (publishableKey != null && publishableKey.isNotEmpty) {
@@ -39,11 +46,10 @@ Future<void> main() async {
   runApp(const NestApp());
 }
 
-// ⭐ Scroll behavior for all platforms
+// Scroll behavior for all platforms
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
-  Set<PointerDeviceKind> get dragDevices =>
-      {PointerDeviceKind.touch, PointerDeviceKind.mouse};
+  Set<PointerDeviceKind> get dragDevices => {PointerDeviceKind.touch, PointerDeviceKind.mouse};
 }
 
 class NestApp extends StatelessWidget {
@@ -57,6 +63,11 @@ class NestApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
       home: const AuthRedirect(),
+      routes: {
+        '/cafe': (_) => const CafeScreen(),
+        '/membership': (_) => const MembershipScreen(),
+        '/update-password': (_) => const UpdatePasswordScreen(),
+      },
     );
   }
 }
@@ -92,19 +103,16 @@ class _AuthRedirectState extends State<AuthRedirect> {
 
   @override
   Widget build(BuildContext context) {
-    // Still loading SharedPreferences
     if (_showOnboarding == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Show onboarding
     if (_showOnboarding!) {
       return OnboardingScreen(onFinished: _onOnboardingFinished);
     }
 
-    // Auth Stream → Login / MainScreen
     return StreamBuilder<AuthState>(
       stream: _supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
@@ -116,6 +124,8 @@ class _AuthRedirectState extends State<AuthRedirect> {
 
         final session = snapshot.data?.session;
         if (session != null) {
+          // ✅ We do NOT redirect inactive users away from MainScreen.
+          // They can explore; booking screens will block booking attempts.
           return const MainScreen();
         }
 
