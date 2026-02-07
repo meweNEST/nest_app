@@ -4,7 +4,7 @@ import 'package:nest_app/widgets/nest_app_bar.dart';
 import 'package:nest_app/widgets/nest_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToSchedule;
   final VoidCallback? onNavigateToMembership;
 
@@ -14,26 +14,84 @@ class HomeScreen extends StatelessWidget {
     this.onNavigateToMembership,
   });
 
-  String _displayName() {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return 'there';
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-    final meta = user.userMetadata ?? {};
-    final fromMeta = (meta['full_name'] ?? meta['name'] ?? meta['first_name'] ?? meta['username'])
-        ?.toString()
-        .trim();
+class _HomeScreenState extends State<HomeScreen> {
+  Map<String, dynamic>? _profileRow;
+  bool _loadingProfile = false;
 
-    if (fromMeta != null && fromMeta.isNotEmpty) return fromMeta;
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileRow();
+  }
 
-    final email = user.email?.trim();
-    if (email != null && email.isNotEmpty && email.contains('@')) {
-      final local = email.split('@').first;
-      if (local.isNotEmpty) {
-        return local[0].toUpperCase() + local.substring(1);
-      }
+  String? _stringOrNull(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
+  Future<void> _loadProfileRow() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    if (_loadingProfile) return;
+
+    setState(() => _loadingProfile = true);
+
+    try {
+      final row = await supabase.from('users').select().eq('id', user.id).maybeSingle();
+
+      if (!mounted) return;
+      setState(() => _profileRow = row);
+    } catch (_) {
+      // If we can't read the profile due to RLS or missing row,
+      // we simply fall back to "Welcome back" and manual form entry.
+    } finally {
+      if (!mounted) return;
+      setState(() => _loadingProfile = false);
     }
+  }
 
-    return 'there';
+  /// Requirement:
+  /// - The "Welcome back" name must come from the profile (public.users).
+  /// - If not set: show ALWAYS just "Welcome back".
+  String? _profileDisplayName() {
+    final row = _profileRow;
+    if (row == null) return null;
+
+    // Adjust priority here if needed:
+    // If your profile uses "nickname" as the main display name,
+    // keep it early in the list (it is).
+    final direct = _stringOrNull(
+      row['nickname'] ??
+          row['full_name'] ??
+          row['name'] ??
+          row['first_name'],
+    );
+    if (direct != null) return direct;
+
+    final first = _stringOrNull(row['first_name']);
+    final last = _stringOrNull(row['last_name'] ?? row['family_name']);
+    final combined = [first, last].whereType<String>().join(' ').trim();
+    return combined.isEmpty ? null : combined;
+  }
+
+  /// Phone prefilling: if profile has a phone column, we fill it automatically.
+  String? _profilePhone() {
+    final row = _profileRow;
+    if (row == null) return null;
+    return _stringOrNull(row['phone'] ?? row['phone_number'] ?? row['mobile']);
+  }
+
+  String _greetingText() {
+    final name = _profileDisplayName();
+    if (name == null || name.isEmpty) return 'Welcome back';
+    return 'Welcome back, $name';
   }
 
   Future<void> _confirmAndLogout(BuildContext context) async {
@@ -67,13 +125,12 @@ class HomeScreen extends StatelessWidget {
     await Supabase.instance.client.auth.signOut();
 
     if (!context.mounted) return;
-    // Ensure we’re back at root; AuthRedirect will show LoginScreen automatically.
     Navigator.of(context).popUntil((r) => r.isFirst);
   }
 
   void _goSchedule(BuildContext context) {
-    if (onNavigateToSchedule != null) {
-      onNavigateToSchedule!.call();
+    if (widget.onNavigateToSchedule != null) {
+      widget.onNavigateToSchedule!.call();
       return;
     }
     Navigator.of(context).pushNamed('/schedule');
@@ -84,8 +141,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _goMembership(BuildContext context) {
-    if (onNavigateToMembership != null) {
-      onNavigateToMembership!.call();
+    if (widget.onNavigateToMembership != null) {
+      widget.onNavigateToMembership!.call();
       return;
     }
     Navigator.of(context).pushNamed('/membership');
@@ -95,13 +152,23 @@ class HomeScreen extends StatelessWidget {
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
 
+    // Ensure we tried to load profile before opening the form (helps prefilling).
+    if (_profileRow == null && !_loadingProfile) {
+      await _loadProfileRow();
+    }
+
     final emailCtrl = TextEditingController(text: user?.email ?? '');
-    final firstNameCtrl = TextEditingController();
-    final lastNameCtrl = TextEditingController();
+    final firstNameCtrl = TextEditingController(text: _stringOrNull(_profileRow?['first_name']) ?? '');
+    final lastNameCtrl = TextEditingController(
+      text: _stringOrNull(_profileRow?['last_name'] ?? _profileRow?['family_name']) ?? '',
+    );
+    final phoneCtrl = TextEditingController(text: _profilePhone() ?? '');
+    final childrenAgesCtrl = TextEditingController();
 
     final formKey = GlobalKey<FormState>();
 
     int attendees = 1;
+    int numberOfChildren = 1;
     bool submitting = false;
 
     await showModalBottomSheet<void>(
@@ -111,9 +178,9 @@ class HomeScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (ctx) {
+      builder: (sheetCtx) {
         return StatefulBuilder(
-          builder: (ctx, setModalState) {
+          builder: (sheetCtx, setModalState) {
             Future<void> submit() async {
               if (submitting) return;
               if (!(formKey.currentState?.validate() ?? false)) return;
@@ -125,30 +192,49 @@ class HomeScreen extends StatelessWidget {
                   'email': emailCtrl.text.trim(),
                   'first_name': firstNameCtrl.text.trim(),
                   'last_name': lastNameCtrl.text.trim(),
+                  'phone': phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
                   'attendees': attendees,
+                  'number_of_children': numberOfChildren,
+                  'children_ages': childrenAgesCtrl.text.trim().isEmpty ? null : childrenAgesCtrl.text.trim(),
                   'user_id': user?.id,
+                  // status is handled by DB default: 'waitlisted'
                 });
 
-                if (!ctx.mounted) return;
-                Navigator.of(ctx).pop();
+                if (!sheetCtx.mounted) return;
+                Navigator.of(sheetCtx).pop();
 
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('You’re on the list! See you at the welcoming party.'),
-                    backgroundColor: AppTheme.sageGreen,
+
+                // Warm “quick pop up” confirmation
+                await showDialog<void>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text(
+                      'You’re on the list!',
+                      style: TextStyle(fontFamily: 'SweetAndSalty'),
+                    ),
+                    content: const Text(
+                      "Thanks for signing up — we’re so happy you want to join.\n\nWe’ll contact you soon, and you’ll be informed if you’re officially invited.",
+                      style: TextStyle(fontFamily: 'CharlevoixPro'),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Okay', style: TextStyle(fontFamily: 'CharlevoixPro')),
+                      ),
+                    ],
                   ),
                 );
               } catch (e) {
-                if (!ctx.mounted) return;
-                ScaffoldMessenger.of(ctx).showSnackBar(
+                if (!sheetCtx.mounted) return;
+                ScaffoldMessenger.of(sheetCtx).showSnackBar(
                   SnackBar(
                     content: Text('Could not join the waitlist: $e'),
                     backgroundColor: Colors.red,
                   ),
                 );
               } finally {
-                if (!ctx.mounted) return;
+                if (!sheetCtx.mounted) return;
                 setModalState(() => submitting = false);
               }
             }
@@ -160,7 +246,7 @@ class HomeScreen extends StatelessWidget {
                   left: 20,
                   right: 20,
                   top: 18,
-                  bottom: 18 + MediaQuery.of(ctx).viewInsets.bottom,
+                  bottom: 18 + MediaQuery.of(sheetCtx).viewInsets.bottom,
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -220,15 +306,26 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: lastNameCtrl,
-                              textInputAction: TextInputAction.done,
+                              textInputAction: TextInputAction.next,
                               autofillHints: const [AutofillHints.familyName],
                               decoration: const InputDecoration(
                                 labelText: 'Family name',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (v) =>
-                              (v ?? '').trim().isEmpty ? 'Please enter your family name.' : null,
-                              onFieldSubmitted: (_) => submit(),
+                              validator: (v) => (v ?? '').trim().isEmpty
+                                  ? 'Please enter your family name.'
+                                  : null,
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: phoneCtrl,
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [AutofillHints.telephoneNumber],
+                              decoration: const InputDecoration(
+                                labelText: 'Phone number (optional)',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                             const SizedBox(height: 14),
                             Container(
@@ -278,6 +375,69 @@ class HomeScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.black.withOpacity(0.08)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Number of children',
+                                      style: TextStyle(
+                                        fontFamily: 'CharlevoixPro',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.darkText,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: submitting
+                                        ? null
+                                        : () => setModalState(
+                                          () => numberOfChildren =
+                                          (numberOfChildren - 1).clamp(0, 10),
+                                    ),
+                                    icon: const Icon(Icons.remove_circle_outline),
+                                  ),
+                                  Text(
+                                    numberOfChildren.toString(),
+                                    style: const TextStyle(
+                                      fontFamily: 'CharlevoixPro',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: submitting
+                                        ? null
+                                        : () => setModalState(
+                                          () => numberOfChildren =
+                                          (numberOfChildren + 1).clamp(0, 10),
+                                    ),
+                                    icon: const Icon(Icons.add_circle_outline),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: childrenAgesCtrl,
+                              textInputAction: TextInputAction.done,
+                              minLines: 1,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                labelText: 'Age of children (optional)',
+                                hintText: 'e.g. 2, 4  or  18 months, 3 years',
+                                border: OutlineInputBorder(),
+                              ),
+                              onFieldSubmitted: (_) => submit(),
+                            ),
                             const SizedBox(height: 18),
                             NestPrimaryButton(
                               text: submitting ? 'Submitting...' : 'Join waitlist',
@@ -287,8 +447,9 @@ class HomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             TextButton(
-                              onPressed: submitting ? null : () => Navigator.of(ctx).pop(),
-                              child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro')),
+                              onPressed: submitting ? null : () => Navigator.of(sheetCtx).pop(),
+                              child: const Text('Cancel',
+                                  style: TextStyle(fontFamily: 'CharlevoixPro')),
                             ),
                           ],
                         ),
@@ -306,7 +467,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = _displayName();
+    final greeting = _greetingText();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -329,7 +490,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 18),
               Center(
                 child: Text(
-                  'Welcome back, $name',
+                  greeting,
                   style: const TextStyle(
                     fontFamily: 'SweetAndSalty',
                     fontSize: 30,
@@ -583,7 +744,6 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
 
 class _Card extends StatelessWidget {
   final Widget child;
