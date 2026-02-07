@@ -20,12 +20,20 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _profileRow;
+
+  Map<String, dynamic>? _waitlistRow;
   bool _loadingProfile = false;
+  bool _loadingWaitlist = false;
 
   @override
   void initState() {
     super.initState();
-    _loadProfileRow();
+    _refreshAll();
+  }
+
+  Future<void> _refreshAll() async {
+    await _loadProfileRow();
+    await _loadWaitlistRow();
   }
 
   String? _stringOrNull(dynamic v) {
@@ -34,78 +42,167 @@ class _HomeScreenState extends State<HomeScreen> {
     return s.isEmpty ? null : s;
   }
 
+  Map<String, String> _splitFullName(String fullName) {
+    final parts = fullName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.trim().isNotEmpty)
+        .toList();
+
+    if (parts.isEmpty) return {'first': '', 'last': ''};
+    if (parts.length == 1) return {'first': parts.first, 'last': ''};
+
+    return {
+      'first': parts.first,
+      'last': parts.sublist(1).join(' '),
+    };
+  }
+
   Future<void> _loadProfileRow() async {
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
     if (user == null) return;
-
     if (_loadingProfile) return;
 
     setState(() => _loadingProfile = true);
-
     try {
       final row = await supabase.from('users').select().eq('id', user.id).maybeSingle();
-
       if (!mounted) return;
       setState(() => _profileRow = row);
     } catch (_) {
-      // If we can't read the profile due to RLS or missing row,
-      // we simply fall back to "Welcome back" and manual form entry.
+      // If profile can't be loaded due to RLS/missing row, we fall back gracefully.
     } finally {
       if (!mounted) return;
       setState(() => _loadingProfile = false);
     }
   }
 
-  /// Requirement:
-  /// - The "Welcome back" name must come from the profile (public.users).
-  /// - If not set: show ALWAYS just "Welcome back".
-  String? _profileDisplayName() {
-    final row = _profileRow;
-    if (row == null) return null;
+  Future<void> _loadWaitlistRow() async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+    if (_loadingWaitlist) return;
 
-    // Adjust priority here if needed:
-    // If your profile uses "nickname" as the main display name,
-    // keep it early in the list (it is).
-    final direct = _stringOrNull(
-      row['nickname'] ??
-          row['full_name'] ??
-          row['name'] ??
-          row['first_name'],
-    );
-    if (direct != null) return direct;
+    setState(() => _loadingWaitlist = true);
+    try {
+      // We fetch a list (limit 1) to avoid errors if there are multiple rows.
+      final rows = await supabase
+          .from('welcoming_party_waitlist')
+          .select()
+          .eq('user_id', user.id)
+          .limit(1);
 
-    final first = _stringOrNull(row['first_name']);
-    final last = _stringOrNull(row['last_name'] ?? row['family_name']);
-    final combined = [first, last].whereType<String>().join(' ').trim();
-    return combined.isEmpty ? null : combined;
-  }
+      Map<String, dynamic>? row;
+      if (rows is List && rows.isNotEmpty) {
+        row = (rows.first as Map).cast<String, dynamic>();
+      }
 
-  /// Phone prefilling: if profile has a phone column, we fill it automatically.
-  String? _profilePhone() {
-    final row = _profileRow;
-    if (row == null) return null;
-    return _stringOrNull(row['phone'] ?? row['phone_number'] ?? row['mobile']);
+      if (!mounted) return;
+      setState(() => _waitlistRow = row);
+    } catch (_) {
+      // If select is blocked by RLS, we can't show status;
+      // the join flow can still work if insert is allowed.
+    } finally {
+      if (!mounted) return;
+      setState(() => _loadingWaitlist = false);
+    }
   }
 
   String _greetingText() {
-    final name = _profileDisplayName();
-    if (name == null || name.isEmpty) return 'Welcome back';
-    return 'Welcome back, $name';
+    // Requirement: greeting name must come from profile full_name.
+    final fullName = _stringOrNull(_profileRow?['full_name']);
+    if (fullName == null) return 'Welcome back';
+    return 'Welcome back, $fullName';
+  }
+
+  bool get _hasJoinedWaitlist => _waitlistRow != null;
+
+  String _statusValue() {
+    final s = _stringOrNull(_waitlistRow?['status'])?.toLowerCase();
+    return s ?? 'waitlisted';
+  }
+
+  String _friendlyStatusTitle(String status) {
+    switch (status) {
+      case 'invited':
+        return 'You’re invited!';
+      case 'confirmed':
+        return 'You’re confirmed!';
+      case 'declined':
+        return 'Update on your request';
+      case 'waitlisted':
+      default:
+        return 'You’re on the waitlist';
+    }
+  }
+
+  String _friendlyStatusMessage(String status) {
+    switch (status) {
+      case 'invited':
+        return "Good news — you’re invited to the welcoming party.\n\nWe’ll reach out with the final details (and anything you need to know before the event).";
+      case 'confirmed':
+        return "You’re officially confirmed for the welcoming party.\n\nWe can’t wait to celebrate with you — see you soon!";
+      case 'declined':
+        return "Thanks so much for signing up.\n\nAt the moment we can’t offer you a spot for this event — but we’ll keep you posted about the next one.";
+      case 'waitlisted':
+      default:
+        return "Thanks for signing up!\n\nYour request is currently on the waitlist. We’ll contact you soon, and you’ll be informed if you’re officially invited.";
+    }
+  }
+
+  Future<void> _showStatusPopup(BuildContext context) async {
+    final status = _statusValue();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          _friendlyStatusTitle(status),
+          style: const TextStyle(fontFamily: 'SweetAndSalty'),
+        ),
+        content: Text(
+          _friendlyStatusMessage(status),
+          style: const TextStyle(fontFamily: 'CharlevoixPro'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Okay', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isWithinMinutes(DateTime now, int startMin, int endMin) {
+    final minutes = now.hour * 60 + now.minute;
+    return minutes >= startMin && minutes < endMin;
+  }
+
+  bool _isCoworkingOpenNow(DateTime now) {
+    // Mon–Fri 8:30–18:30
+    final weekday = now.weekday; // Mon=1 ... Sun=7
+    final isWeekday = weekday >= DateTime.monday && weekday <= DateTime.friday;
+    if (!isWeekday) return false;
+    return _isWithinMinutes(now, 8 * 60 + 30, 18 * 60 + 30);
+  }
+
+  bool _isCafeOpenNow(DateTime now) {
+    // Daily 10:00–17:00
+    return _isWithinMinutes(now, 10 * 60, 17 * 60);
+  }
+
+  bool _isNestOpenNow(DateTime now) {
+    // Consider NEST "open" if either coworking OR café is open.
+    return _isCoworkingOpenNow(now) || _isCafeOpenNow(now);
   }
 
   Future<void> _confirmAndLogout(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Logout?',
-          style: TextStyle(fontFamily: 'SweetAndSalty'),
-        ),
-        content: const Text(
-          'Are you sure you want to log out?',
-          style: TextStyle(fontFamily: 'CharlevoixPro'),
-        ),
+        title: const Text('Logout?', style: TextStyle(fontFamily: 'SweetAndSalty')),
+        content: const Text('Are you sure you want to log out?',
+            style: TextStyle(fontFamily: 'CharlevoixPro')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -123,7 +220,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!ok) return;
 
     await Supabase.instance.client.auth.signOut();
-
     if (!context.mounted) return;
     Navigator.of(context).popUntil((r) => r.isFirst);
   }
@@ -148,21 +244,31 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).pushNamed('/membership');
   }
 
+  Future<void> _openWaitlistFlow(BuildContext context) async {
+    // If already signed up, show status instead of signup form.
+    if (_hasJoinedWaitlist) {
+      await _showStatusPopup(context);
+      return;
+    }
+    await _joinWaitlist(context);
+  }
+
   Future<void> _joinWaitlist(BuildContext context) async {
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
 
-    // Ensure we tried to load profile before opening the form (helps prefilling).
+    // Make sure we have profile data for full_name splitting
     if (_profileRow == null && !_loadingProfile) {
       await _loadProfileRow();
     }
 
+    final fullName = _stringOrNull(_profileRow?['full_name']);
+    final split = fullName != null ? _splitFullName(fullName) : {'first': '', 'last': ''};
+
     final emailCtrl = TextEditingController(text: user?.email ?? '');
-    final firstNameCtrl = TextEditingController(text: _stringOrNull(_profileRow?['first_name']) ?? '');
-    final lastNameCtrl = TextEditingController(
-      text: _stringOrNull(_profileRow?['last_name'] ?? _profileRow?['family_name']) ?? '',
-    );
-    final phoneCtrl = TextEditingController(text: _profilePhone() ?? '');
+    final firstNameCtrl = TextEditingController(text: split['first'] ?? '');
+    final lastNameCtrl = TextEditingController(text: split['last'] ?? '');
+    final phoneCtrl = TextEditingController();
     final childrenAgesCtrl = TextEditingController();
 
     final formKey = GlobalKey<FormState>();
@@ -197,22 +303,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   'number_of_children': numberOfChildren,
                   'children_ages': childrenAgesCtrl.text.trim().isEmpty ? null : childrenAgesCtrl.text.trim(),
                   'user_id': user?.id,
-                  // status is handled by DB default: 'waitlisted'
+                  // status default is 'waitlisted'
                 });
 
                 if (!sheetCtx.mounted) return;
                 Navigator.of(sheetCtx).pop();
 
+                // Reload waitlist so the button changes to "Check your status"
+                await _loadWaitlistRow();
+
                 if (!context.mounted) return;
 
-                // Warm “quick pop up” confirmation
+                // Warm confirmation popup
                 await showDialog<void>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text(
-                      'You’re on the list!',
-                      style: TextStyle(fontFamily: 'SweetAndSalty'),
-                    ),
+                    title: const Text('You’re on the list!',
+                        style: TextStyle(fontFamily: 'SweetAndSalty')),
                     content: const Text(
                       "Thanks for signing up — we’re so happy you want to join.\n\nWe’ll contact you soon, and you’ll be informed if you’re officially invited.",
                       style: TextStyle(fontFamily: 'CharlevoixPro'),
@@ -300,8 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 labelText: 'First name',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (v) =>
-                              (v ?? '').trim().isEmpty ? 'Please enter your first name.' : null,
+                              validator: (v) => (v ?? '').trim().isEmpty ? 'Please enter your first name.' : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
@@ -312,9 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 labelText: 'Family name',
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (v) => (v ?? '').trim().isEmpty
-                                  ? 'Please enter your family name.'
-                                  : null,
+                              validator: (v) => (v ?? '').trim().isEmpty ? 'Please enter your family name.' : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
@@ -328,102 +432,22 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(height: 14),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Colors.black.withOpacity(0.08)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Expanded(
-                                    child: Text(
-                                      'Number of attendees',
-                                      style: TextStyle(
-                                        fontFamily: 'CharlevoixPro',
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.darkText,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: submitting
-                                        ? null
-                                        : () => setModalState(
-                                          () => attendees = (attendees - 1).clamp(1, 20),
-                                    ),
-                                    icon: const Icon(Icons.remove_circle_outline),
-                                  ),
-                                  Text(
-                                    attendees.toString(),
-                                    style: const TextStyle(
-                                      fontFamily: 'CharlevoixPro',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: submitting
-                                        ? null
-                                        : () => setModalState(
-                                          () => attendees = (attendees + 1).clamp(1, 20),
-                                    ),
-                                    icon: const Icon(Icons.add_circle_outline),
-                                  ),
-                                ],
-                              ),
+                            _StepperTile(
+                              title: 'Number of attendees',
+                              value: attendees,
+                              min: 1,
+                              max: 20,
+                              submitting: submitting,
+                              onChanged: (v) => setModalState(() => attendees = v),
                             ),
                             const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Colors.black.withOpacity(0.08)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Expanded(
-                                    child: Text(
-                                      'Number of children',
-                                      style: TextStyle(
-                                        fontFamily: 'CharlevoixPro',
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.darkText,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: submitting
-                                        ? null
-                                        : () => setModalState(
-                                          () => numberOfChildren =
-                                          (numberOfChildren - 1).clamp(0, 10),
-                                    ),
-                                    icon: const Icon(Icons.remove_circle_outline),
-                                  ),
-                                  Text(
-                                    numberOfChildren.toString(),
-                                    style: const TextStyle(
-                                      fontFamily: 'CharlevoixPro',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: submitting
-                                        ? null
-                                        : () => setModalState(
-                                          () => numberOfChildren =
-                                          (numberOfChildren + 1).clamp(0, 10),
-                                    ),
-                                    icon: const Icon(Icons.add_circle_outline),
-                                  ),
-                                ],
-                              ),
+                            _StepperTile(
+                              title: 'Number of children',
+                              value: numberOfChildren,
+                              min: 0,
+                              max: 10,
+                              submitting: submitting,
+                              onChanged: (v) => setModalState(() => numberOfChildren = v),
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
@@ -448,8 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 10),
                             TextButton(
                               onPressed: submitting ? null : () => Navigator.of(sheetCtx).pop(),
-                              child: const Text('Cancel',
-                                  style: TextStyle(fontFamily: 'CharlevoixPro')),
+                              child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro')),
                             ),
                           ],
                         ),
@@ -468,6 +491,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final greeting = _greetingText();
+    final now = DateTime.now();
+    final isOpen = _isNestOpenNow(now);
+
+    final openingBg = isOpen ? const Color(0xFFB2E5D1) : const Color(0xFFFF5757);
+    const openingTextColor = Colors.white;
+
+    final waitlistBg = const Color(0xFFFFDE59);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -512,6 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 28),
+
               const _SectionTitle(title: 'Quick Actions'),
               const SizedBox(height: 12),
               _Card(
@@ -531,40 +562,41 @@ class _HomeScreenState extends State<HomeScreen> {
                         text: 'ORDER COFFEE',
                         onPressed: () => _goCafe(context),
                         backgroundColor: const Color(0xFFFFBD59),
-                        hoverBackgroundColor: const Color(0xFFFFA726),
+                        hoverBackgroundColor: const Color(0xFFF87CC8), // requested hover
                         textColor: Colors.black87,
                       ),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // WAITLIST SECTION (yellow background)
               _InfoCard(
+                backgroundColor: waitlistBg,
                 icon: Icons.celebration_outlined,
                 title: 'Upcoming Event',
                 content: 'Grand opening event - 16 March 2026',
-                subcontent: "Don't forget to register and join the party!",
+                subcontent: _hasJoinedWaitlist
+                    ? "You’re signed up. Tap below to check your current status."
+                    : "Don’t forget to register and join the party!",
                 footer: Padding(
                   padding: const EdgeInsets.only(top: 14),
                   child: SizedBox(
-                    width: 170,
+                    width: 190,
                     child: NestPrimaryButton(
-                      text: 'Join waitlist',
-                      onPressed: () => _joinWaitlist(context),
+                      text: _hasJoinedWaitlist ? 'Check your status' : 'Join waitlist',
+                      onPressed: () => _openWaitlistFlow(context),
                       backgroundColor: AppTheme.bookingButtonColor,
                       textColor: Colors.white,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              const _InfoCard(
-                icon: Icons.access_time_filled_rounded,
-                title: 'Opening Hours',
-                content: 'Mon - Fri: 8:00 AM - 6:00 PM',
-                subcontent: 'Sat - Sun & Holidays: Closed',
-              ),
+
               const SizedBox(height: 20),
+
               _Card(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,9 +633,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+
               const SizedBox(height: 22),
               const _SectionTitle(title: 'About NEST'),
               const SizedBox(height: 12),
+
               _Card(
                 child: Column(
                   children: [
@@ -649,10 +683,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        '✨ A quiet workspace\n'
-                            '✨ Montessori-inspired childcare\n'
-                            '✨ A supportive community\n'
-                            '✨ A family café & classes\n',
+                        '🧘 Focus-friendly workspace\n'
+                            '🧸 Montessori-inspired childcare\n'
+                            '🤝 Supportive community\n'
+                            '☕ Family café & classes\n',
                         style: TextStyle(
                           fontFamily: 'CharlevoixPro',
                           fontSize: 14,
@@ -676,10 +710,87 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              // OPENING HOURS SECTION (moved to bottom, dynamic background, white text)
+              _InfoCard(
+                backgroundColor: openingBg,
+                icon: isOpen ? Icons.access_time_filled_rounded : Icons.lock_clock,
+                title: isOpen ? 'We’re open right now' : 'We’re currently closed',
+                content: 'CoWorking: Mo–Fr 8:30–18:30',
+                subcontent: 'Family Café: Daily 10:00–17:00',
+                titleColor: openingTextColor,
+                contentColor: openingTextColor,
+                subcontentColor: openingTextColor.withOpacity(0.95),
+                iconColor: openingTextColor,
+              ),
+
               const SizedBox(height: 32),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StepperTile extends StatelessWidget {
+  final String title;
+  final int value;
+  final int min;
+  final int max;
+  final bool submitting;
+  final ValueChanged<int> onChanged;
+
+  const _StepperTile({
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.submitting,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withOpacity(0.08)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.darkText,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: submitting ? null : () => onChanged((value - 1).clamp(min, max)),
+            icon: const Icon(Icons.remove_circle_outline),
+          ),
+          Text(
+            value.toString(),
+            style: const TextStyle(
+              fontFamily: 'CharlevoixPro',
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          IconButton(
+            onPressed: submitting ? null : () => onChanged((value + 1).clamp(min, max)),
+            icon: const Icon(Icons.add_circle_outline),
+          ),
+        ],
       ),
     );
   }
@@ -747,14 +858,16 @@ class _SectionTitle extends StatelessWidget {
 
 class _Card extends StatelessWidget {
   final Widget child;
-  const _Card({required this.child});
+  final Color? backgroundColor;
+
+  const _Card({required this.child, this.backgroundColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -776,31 +889,44 @@ class _InfoCard extends StatelessWidget {
   final String subcontent;
   final Widget? footer;
 
+  final Color? backgroundColor;
+
+  final Color? iconColor;
+  final Color? titleColor;
+  final Color? contentColor;
+  final Color? subcontentColor;
+
   const _InfoCard({
     required this.icon,
     required this.title,
     required this.content,
     required this.subcontent,
     this.footer,
+    this.backgroundColor,
+    this.iconColor,
+    this.titleColor,
+    this.contentColor,
+    this.subcontentColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return _Card(
+      backgroundColor: backgroundColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppTheme.secondaryText, size: 20),
+              Icon(icon, color: iconColor ?? AppTheme.secondaryText, size: 20),
               const SizedBox(width: 12),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'CharlevoixPro',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.darkText,
+                  color: titleColor ?? AppTheme.darkText,
                 ),
               ),
             ],
@@ -808,20 +934,20 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             content,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'CharlevoixPro',
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.darkText,
+              color: contentColor ?? AppTheme.darkText,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             subcontent,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'CharlevoixPro',
               fontSize: 14,
-              color: AppTheme.secondaryText,
+              color: subcontentColor ?? AppTheme.secondaryText,
               height: 1.35,
             ),
           ),
