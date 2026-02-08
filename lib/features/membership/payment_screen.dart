@@ -203,31 +203,36 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     } on StripeException catch (e) {
       // Handle Stripe-specific errors
+      debugPrint('Stripe Error: ${e.error.message}');
+      if (!mounted) return;
       ErrorHandler.showError(
         context,
         e,
         userMessage: e.error.message ?? 'Payment failed. Please try again.',
       );
-      debugPrint('Stripe Error: ${e.error.message}');
     } on PlatformException catch (e) {
       // Handle platform-specific exceptions (e.g., user cancelled Apple Pay)
+      debugPrint('Platform Exception: ${e.message}');
+      if (!mounted) return;
       ErrorHandler.showWarning(
         context,
         e.message ?? 'Payment cancelled',
       );
-      debugPrint('Platform Exception: ${e.message}');
     } catch (e) {
       // Catch any other unexpected errors
       debugPrint('Unexpected payment error: $e');
+      if (!mounted) return;
       ErrorHandler.showError(
         context,
         e,
         userMessage: 'An unexpected error occurred during payment.',
       );
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
