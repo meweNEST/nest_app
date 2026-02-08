@@ -70,18 +70,31 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
 
   DateTime _dayOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  ({DateTime startLocal, DateTime endLocal}) _slotToRangeLocal(DateTime day, String slot) {
+  ({DateTime startLocal, DateTime endLocal}) _slotToRangeLocal(
+      DateTime day, String slot) {
     final d = _dayOnly(day);
     switch (slot) {
       case '9-12':
-        return (startLocal: DateTime(d.year, d.month, d.day, 9), endLocal: DateTime(d.year, d.month, d.day, 12));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 9),
+          endLocal: DateTime(d.year, d.month, d.day, 12)
+        );
       case '12-15':
-        return (startLocal: DateTime(d.year, d.month, d.day, 12), endLocal: DateTime(d.year, d.month, d.day, 15));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 12),
+          endLocal: DateTime(d.year, d.month, d.day, 15)
+        );
       case '15-18':
-        return (startLocal: DateTime(d.year, d.month, d.day, 15), endLocal: DateTime(d.year, d.month, d.day, 18));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 15),
+          endLocal: DateTime(d.year, d.month, d.day, 18)
+        );
       case 'Full Day':
       default:
-        return (startLocal: DateTime(d.year, d.month, d.day, 9), endLocal: DateTime(d.year, d.month, d.day, 18));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 9),
+          endLocal: DateTime(d.year, d.month, d.day, 18)
+        );
     }
   }
 
@@ -90,7 +103,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   // ----------------------------
 
   Future<Map<String, dynamic>> _canUserBookCurrentSlot() async {
-    final range = _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
+    final range =
+        _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
     final startUtc = range.startLocal.toUtc().toIso8601String();
     final endUtc = range.endLocal.toUtc().toIso8601String();
 
@@ -100,7 +114,9 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     });
 
     if (res is Map) return Map<String, dynamic>.from(res);
-    if (res is List && res.isNotEmpty && res.first is Map) return Map<String, dynamic>.from(res.first as Map);
+    if (res is List && res.isNotEmpty && res.first is Map) {
+      return Map<String, dynamic>.from(res.first as Map);
+    }
     return {'allowed': false, 'reason': 'Please try again.'};
   }
 
@@ -108,7 +124,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     final user = supabase.auth.currentUser;
     if (user == null) return false;
 
-    final range = _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
+    final range =
+        _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
     final startUtc = range.startLocal.toUtc().toIso8601String();
     final endUtc = range.endLocal.toUtc().toIso8601String();
 
@@ -133,11 +150,13 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(title, style: const TextStyle(fontFamily: 'SweetAndSalty')),
-        content: Text(message, style: const TextStyle(fontFamily: 'CharlevoixPro')),
+        content:
+            Text(message, style: const TextStyle(fontFamily: 'CharlevoixPro')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK', style: TextStyle(fontFamily: 'CharlevoixPro')),
+            child:
+                const Text('OK', style: TextStyle(fontFamily: 'CharlevoixPro')),
           )
         ],
       ),
@@ -151,7 +170,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       final allowed = can['allowed'] == true;
       if (!allowed) {
         final reason = (can['reason'] ?? 'Booking not available.').toString();
-        await _showBlockedDialog(title: 'Booking not available', message: reason);
+        await _showBlockedDialog(
+            title: 'Booking not available', message: reason);
         if (!mounted) return true;
         Navigator.of(context).pop();
         return true;
@@ -163,7 +183,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       if (hasOverlap) {
         await _showBlockedDialog(
           title: 'Already booked',
-          message: 'You already have a booking in this time slot. Please choose another slot.',
+          message:
+              'You already have a booking in this time slot. Please choose another slot.',
         );
         if (!mounted) return true;
         Navigator.of(context).pop();
@@ -189,8 +210,10 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
           .eq('id', user.id)
           .maybeSingle();
 
-      _membershipType = (row?['membership_type'] ?? '').toString().trim().toLowerCase();
-      _membershipStatus = (row?['membership_status'] ?? '').toString().trim().toLowerCase();
+      _membershipType =
+          (row?['membership_type'] ?? '').toString().trim().toLowerCase();
+      _membershipStatus =
+          (row?['membership_status'] ?? '').toString().trim().toLowerCase();
     } catch (_) {
       _membershipType = null;
       _membershipStatus = null;
@@ -216,14 +239,16 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
 
     if (status != 'active') {
       // Try to pass a restrictive value if it exists; otherwise fall back safely.
-      return _enumByPreferredNames(['none', 'guest', 'daypass', 'light', 'regular']);
+      return _enumByPreferredNames(
+          ['none', 'guest', 'daypass', 'light', 'regular']);
     }
 
     if (type == 'full') {
       return _enumByPreferredNames(['full', 'regular']);
     }
     if (type == 'part-time' || type == 'part_time') {
-      return _enumByPreferredNames(['parttime', 'part_time', 'partTime', 'regular']);
+      return _enumByPreferredNames(
+          ['parttime', 'part_time', 'partTime', 'regular']);
     }
     if (type == 'regular') {
       return _enumByPreferredNames(['regular']);
@@ -235,7 +260,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   bool get _isFullOrPartTimeActive {
     final status = (_membershipStatus ?? '').trim().toLowerCase();
     final type = (_membershipType ?? '').trim().toLowerCase();
-    return status == 'active' && (type == 'full' || type == 'part-time' || type == 'part_time');
+    return status == 'active' &&
+        (type == 'full' || type == 'part-time' || type == 'part_time');
   }
 
   // ----------------------------
@@ -253,11 +279,14 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
 
       final rows = await supabase
           .from('workspaces')
-          .select('id,name,workspace_type,capacity,is_bookable,workspace_description')
+          .select(
+              'id,name,workspace_type,capacity,is_bookable,workspace_description')
           .eq('is_bookable', true)
           .order('id', ascending: true);
 
-      _workspaces = (rows as List).map((r) => _Workspace.fromJson(r as Map<String, dynamic>)).toList();
+      _workspaces = (rows as List)
+          .map((r) => _Workspace.fromJson(r as Map<String, dynamic>))
+          .toList();
 
       await _loadPositions();
       await _loadSlotCounts();
@@ -274,7 +303,9 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   }
 
   Future<void> _loadPositions() async {
-    final rows = await supabase.from('workspace_map_positions').select('workspace_id,x,y');
+    final rows = await supabase
+        .from('workspace_map_positions')
+        .select('workspace_id,x,y');
 
     final Map<int, Offset> m = {};
     for (final r in (rows as List)) {
@@ -289,7 +320,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   }
 
   Future<void> _loadSlotCounts() async {
-    final range = _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
+    final range =
+        _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
     final startUtc = range.startLocal.toUtc().toIso8601String();
     final endUtc = range.endLocal.toUtc().toIso8601String();
 
@@ -305,7 +337,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     for (final r in (rows as List)) {
       final map = r as Map<String, dynamic>;
       final wid = (map['workspace_id'] as num).toInt();
-      final type = (map['meeting_booking_type'] ?? '').toString().trim().toLowerCase();
+      final type =
+          (map['meeting_booking_type'] ?? '').toString().trim().toLowerCase();
 
       counts[wid] = (counts[wid] ?? 0) + 1;
       if (type == 'private') privateRooms.add(wid);
@@ -321,7 +354,11 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     if (pref == null) return all;
 
     if (pref == 'Quiet Zone') {
-      return all.where((w) => w.workspaceType == 'FOCUS_BOX' || w.workspaceType == 'MEETING_ROOM').toList();
+      return all
+          .where((w) =>
+              w.workspaceType == 'FOCUS_BOX' ||
+              w.workspaceType == 'MEETING_ROOM')
+          .toList();
     } else {
       return all.where((w) => w.workspaceType != 'FOCUS_BOX').toList();
     }
@@ -329,7 +366,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
 
   int _remainingForWorkspace(_Workspace w) {
     final isMeetingRoom = w.workspaceType == 'MEETING_ROOM';
-    final privateBooked = isMeetingRoom && _privateBookedMeetingRoomIds.contains(w.id);
+    final privateBooked =
+        isMeetingRoom && _privateBookedMeetingRoomIds.contains(w.id);
     if (privateBooked) return 0;
 
     final booked = _bookedCountByWorkspaceId[w.id] ?? 0;
@@ -378,7 +416,11 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       case 'STANDING_DESK':
         return const ['Stand & stretch', 'Quick sessions', 'Good posture'];
       case 'MEETING_ROOM':
-        return const ['Comfortable benches', 'Talk & collaborate', 'More privacy'];
+        return const [
+          'Comfortable benches',
+          'Talk & collaborate',
+          'More privacy'
+        ];
       case 'SHARED_DESK':
         return const ['Big shared table', 'Community vibe', 'Fast Wi‑Fi'];
       default:
@@ -401,12 +443,15 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Booking confirmed!', style: TextStyle(fontFamily: 'SweetAndSalty')),
+        title: const Text('Booking confirmed!',
+            style: TextStyle(fontFamily: 'SweetAndSalty')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(workspaceName, style: const TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800)),
+            Text(workspaceName,
+                style: const TextStyle(
+                    fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(date, style: const TextStyle(fontFamily: 'CharlevoixPro')),
             Text(time, style: const TextStyle(fontFamily: 'CharlevoixPro')),
@@ -415,7 +460,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK', style: TextStyle(fontFamily: 'CharlevoixPro')),
+            child:
+                const Text('OK', style: TextStyle(fontFamily: 'CharlevoixPro')),
           )
         ],
       ),
@@ -425,7 +471,9 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   String _friendlyBookingError(Object e) {
     final s = e.toString().toLowerCase();
 
-    if (s.contains('23p01') || s.contains('no_overlapping_bookings_per_user') || s.contains('exclusion constraint')) {
+    if (s.contains('23p01') ||
+        s.contains('no_overlapping_bookings_per_user') ||
+        s.contains('exclusion constraint')) {
       return 'You already have a booking in this time slot. Please choose another slot.';
     }
     if (s.contains('passes can only be used for full day')) {
@@ -434,21 +482,27 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     if (s.contains('house rules')) {
       return 'Please accept the house rules to book.';
     }
-    if (s.contains('no valid pass') || s.contains('no pass') || s.contains('credits')) {
+    if (s.contains('no valid pass') ||
+        s.contains('no pass') ||
+        s.contains('credits')) {
       return 'No valid pass credits available. Please buy a pass or activate a membership.';
     }
     return 'Booking failed. Please try again.';
   }
 
   Future<void> _handleSeatTap(_Workspace workspace) async {
-    if (widget.selectedCategoryType != null && workspace.workspaceType != widget.selectedCategoryType) return;
+    if (widget.selectedCategoryType != null &&
+        workspace.workspaceType != widget.selectedCategoryType) {
+      return;
+    }
 
     try {
       final can = await _canUserBookCurrentSlot();
       if (!mounted) return;
       if (can['allowed'] != true) {
         final reason = (can['reason'] ?? 'Booking not available.').toString();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(reason), backgroundColor: Colors.red));
         return;
       }
     } catch (_) {}
@@ -459,7 +513,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       if (hasOverlap) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('You already have a booking in this time slot. Please choose another slot.'),
+            content: Text(
+                'You already have a booking in this time slot. Please choose another slot.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -468,7 +523,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     } catch (_) {}
 
     final isMeetingRoom = workspace.workspaceType == 'MEETING_ROOM';
-    final privateBooked = isMeetingRoom && _privateBookedMeetingRoomIds.contains(workspace.id);
+    final privateBooked =
+        isMeetingRoom && _privateBookedMeetingRoomIds.contains(workspace.id);
 
     final remaining = _remainingForWorkspace(workspace);
     final capacity = workspace.capacity <= 0 ? 1 : workspace.capacity;
@@ -477,8 +533,10 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     if (isMeetingRoom && privateBooked) return;
 
     await _loadSlotCounts();
+    if (!mounted) return;
 
-    final range = _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
+    final range =
+        _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
 
     MeetingBookingType? meetingType;
     if (isMeetingRoom) {
@@ -489,6 +547,7 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
         ),
       );
       if (selection == null) return;
+      if (!mounted) return;
       meetingType = selection;
 
       if (meetingType == MeetingBookingType.private) {
@@ -497,7 +556,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Private meeting room booking is only available for active Full or Part-Time members.'),
+              content: Text(
+                  'Private meeting room booking is only available for active Full or Part-Time members.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -510,7 +570,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('You can only book the meeting room privately if no seats are booked yet.'),
+              content: Text(
+                  'You can only book the meeting room privately if no seats are booked yet.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -538,7 +599,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     if (user == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in again.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Please log in again.'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -555,7 +617,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       };
 
       if (isMeetingRoom && meetingType != null) {
-        payload['meeting_booking_type'] = meetingType == MeetingBookingType.private ? 'private' : 'shared';
+        payload['meeting_booking_type'] =
+            meetingType == MeetingBookingType.private ? 'private' : 'shared';
       }
 
       await supabase.from('bookings').insert(payload).select('id').single();
@@ -572,14 +635,17 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyBookingError(e)), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text(_friendlyBookingError(e)),
+            backgroundColor: Colors.red),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final range = _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
+    final range =
+        _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
     final localizations = MaterialLocalizations.of(context);
 
     final displayDate = localizations.formatFullDate(range.startLocal);
@@ -592,7 +658,9 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Map view', style: TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.darkText)),
+        title: const Text('Map view',
+            style: TextStyle(
+                fontFamily: 'CharlevoixPro', color: AppTheme.darkText)),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppTheme.darkText),
@@ -600,151 +668,190 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : (_error != null)
-          ? Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(_error!, style: const TextStyle(color: Colors.red)),
-        ),
-      )
-          : Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(
-            displayDate,
-            style: const TextStyle(
-              fontFamily: 'CharlevoixPro',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            displayTime,
-            style: const TextStyle(
-              fontFamily: 'CharlevoixPro',
-              fontSize: 14,
-              color: AppTheme.secondaryText,
-            ),
-          ),
-          if (widget.selectedCategoryType != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Category: ${_categoryLabel(widget.selectedCategoryType!)}',
-              style: const TextStyle(
-                fontFamily: 'CharlevoixPro',
-                fontSize: 13,
-                color: AppTheme.secondaryText,
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final mapSize = Size(
-                  constraints.maxWidth,
-                  min(constraints.maxHeight, constraints.maxWidth * 0.72),
-                );
-
-                return Center(
-                  child: InteractiveViewer(
-                    minScale: 0.9,
-                    maxScale: 3.0,
-                    child: SizedBox(
-                      width: mapSize.width,
-                      height: mapSize.height,
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.asset(
-                              _blueprintAssetPath,
-                              width: mapSize.width,
-                              height: mapSize.height,
-                              fit: BoxFit.contain,
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(_error!,
+                        style: const TextStyle(color: Colors.red)),
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayDate,
+                          style: const TextStyle(
+                            fontFamily: 'CharlevoixPro',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          displayTime,
+                          style: const TextStyle(
+                            fontFamily: 'CharlevoixPro',
+                            fontSize: 14,
+                            color: AppTheme.secondaryText,
+                          ),
+                        ),
+                        if (widget.selectedCategoryType != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Category: ${_categoryLabel(widget.selectedCategoryType!)}',
+                            style: const TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontSize: 13,
+                              color: AppTheme.secondaryText,
                             ),
                           ),
-                          ...seats.map((w) {
-                            final norm = _posNormByWorkspaceId[w.id];
-                            if (norm == null) return const SizedBox.shrink();
+                        ],
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final mapSize = Size(
+                                constraints.maxWidth,
+                                min(constraints.maxHeight,
+                                    constraints.maxWidth * 0.72),
+                              );
 
-                            final p = Offset(norm.dx * mapSize.width, norm.dy * mapSize.height);
-
-                            final isMeetingRoom = w.workspaceType == 'MEETING_ROOM';
-                            final privateBooked = isMeetingRoom && _privateBookedMeetingRoomIds.contains(w.id);
-
-                            final remaining = _remainingForWorkspace(w);
-                            final capacity = w.capacity <= 0 ? 1 : w.capacity;
-
-                            if (!isMeetingRoom && capacity == 1 && remaining <= 0) {
-                              return const SizedBox.shrink();
-                            }
-
-                            if (isMeetingRoom && remaining <= 0 && !privateBooked) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final locked = widget.selectedCategoryType != null;
-                            final isActiveCategory = !locked || w.workspaceType == widget.selectedCategoryType;
-                            final opacity = isActiveCategory ? 1.0 : 0.22;
-
-                            const markerSize = 22.0;
-                            final borderColor = _colorForWorkspace(w);
-
-                            return Positioned(
-                              left: p.dx - markerSize / 2,
-                              top: p.dy - markerSize / 2,
-                              child: Opacity(
-                                opacity: opacity,
-                                child: MouseRegion(
-                                  cursor: (isActiveCategory && !privateBooked)
-                                      ? SystemMouseCursors.click
-                                      : SystemMouseCursors.basic,
-                                  child: Tooltip(
-                                    message: w.name,
-                                    child: GestureDetector(
-                                      onTap: (!isActiveCategory || privateBooked) ? null : () => _handleSeatTap(w),
-                                      child: Container(
-                                        width: markerSize,
-                                        height: markerSize,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.white.withOpacity(0.92),
-                                          border: Border.all(color: borderColor, width: 2),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 3),
-                                              color: Colors.black.withOpacity(0.10),
-                                            ),
-                                          ],
+                              return Center(
+                                child: InteractiveViewer(
+                                  minScale: 0.9,
+                                  maxScale: 3.0,
+                                  child: SizedBox(
+                                    width: mapSize.width,
+                                    height: mapSize.height,
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          child: Image.asset(
+                                            _blueprintAssetPath,
+                                            width: mapSize.width,
+                                            height: mapSize.height,
+                                            fit: BoxFit.contain,
+                                          ),
                                         ),
-                                      ),
+                                        ...seats.map((w) {
+                                          final norm =
+                                              _posNormByWorkspaceId[w.id];
+                                          if (norm == null) {
+                                            return const SizedBox.shrink();
+                                          }
+
+                                          final p = Offset(
+                                              norm.dx * mapSize.width,
+                                              norm.dy * mapSize.height);
+
+                                          final isMeetingRoom =
+                                              w.workspaceType == 'MEETING_ROOM';
+                                          final privateBooked = isMeetingRoom &&
+                                              _privateBookedMeetingRoomIds
+                                                  .contains(w.id);
+
+                                          final remaining =
+                                              _remainingForWorkspace(w);
+                                          final capacity =
+                                              w.capacity <= 0 ? 1 : w.capacity;
+
+                                          if (!isMeetingRoom &&
+                                              capacity == 1 &&
+                                              remaining <= 0) {
+                                            return const SizedBox.shrink();
+                                          }
+
+                                          if (isMeetingRoom &&
+                                              remaining <= 0 &&
+                                              !privateBooked) {
+                                            return const SizedBox.shrink();
+                                          }
+
+                                          final locked =
+                                              widget.selectedCategoryType !=
+                                                  null;
+                                          final isActiveCategory = !locked ||
+                                              w.workspaceType ==
+                                                  widget.selectedCategoryType;
+                                          final opacity =
+                                              isActiveCategory ? 1.0 : 0.22;
+
+                                          const markerSize = 22.0;
+                                          final borderColor =
+                                              _colorForWorkspace(w);
+
+                                          return Positioned(
+                                            left: p.dx - markerSize / 2,
+                                            top: p.dy - markerSize / 2,
+                                            child: Opacity(
+                                              opacity: opacity,
+                                              child: MouseRegion(
+                                                cursor: (isActiveCategory &&
+                                                        !privateBooked)
+                                                    ? SystemMouseCursors.click
+                                                    : SystemMouseCursors.basic,
+                                                child: Tooltip(
+                                                  message: w.name,
+                                                  child: GestureDetector(
+                                                    onTap: (!isActiveCategory ||
+                                                            privateBooked)
+                                                        ? null
+                                                        : () =>
+                                                            _handleSeatTap(w),
+                                                    child: Container(
+                                                      width: markerSize,
+                                                      height: markerSize,
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: Colors.white
+                                                            .withValues(
+                                                                alpha: 0.92),
+                                                        border: Border.all(
+                                                            color: borderColor,
+                                                            width: 2),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            blurRadius: 8,
+                                                            offset:
+                                                                const Offset(
+                                                                    0, 3),
+                                                            color: Colors.black
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.10),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Tip: pinch to zoom. Hover (or long press) a dot to see the seat name.",
-            style: TextStyle(
-              fontFamily: 'CharlevoixPro',
-              fontSize: 13,
-              color: AppTheme.secondaryText,
-            ),
-          ),
-        ]),
-      ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Tip: pinch to zoom. Hover (or long press) a dot to see the seat name.",
+                          style: TextStyle(
+                            fontFamily: 'CharlevoixPro',
+                            fontSize: 13,
+                            color: AppTheme.secondaryText,
+                          ),
+                        ),
+                      ]),
+                ),
     );
   }
 }

@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   static const Color _toggleActiveColor = Color(0xFFFFDE59);
   static final Color _toggleActiveTrackColor =
-      const Color(0xFFFFDE59).withOpacity(0.45);
+      const Color(0xFFFFDE59).withValues(alpha: 0.45);
 
   // Support / feedback
   static const String _nestEmail = 'membership@nest-hamburg.de';
@@ -370,8 +370,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   }).eq('id', user.id);
 
                                   if (!mounted) return;
-                                  Navigator.of(sheetCtx).pop();
+                                  if (sheetCtx.mounted) {
+                                    Navigator.of(sheetCtx).pop();
+                                  }
                                   await _loadAll();
+                                  if (!mounted) return;
+                                  if (!context.mounted) return;
 
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -513,6 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               await supabase.auth
                                   .updateUser(UserAttributes(password: p1));
                               if (!mounted) return;
+                              if (!sheetCtx.mounted) return;
                               Navigator.of(sheetCtx).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -612,7 +617,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50)),
-                      side: BorderSide(color: Colors.red.withOpacity(0.35)),
+                      side:
+                          BorderSide(color: Colors.red.withValues(alpha: 0.35)),
                       padding: const EdgeInsets.symmetric(
                           vertical: 14, horizontal: 24),
                     ),
@@ -976,7 +982,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
-                side: BorderSide(color: Colors.red.withOpacity(0.35)),
+                side: BorderSide(color: Colors.red.withValues(alpha: 0.35)),
               ),
               child: const Text('Cancel',
                   style: TextStyle(
@@ -1181,8 +1187,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   }
 
                                   if (!mounted) return;
+                                  if (!sheetCtx.mounted) return;
                                   Navigator.of(sheetCtx).pop();
                                   await _loadAll();
+                                  if (!mounted) return;
+                                  if (!context.mounted) return;
 
                                   ScaffoldMessenger.of(this.context)
                                       .showSnackBar(
@@ -1251,9 +1260,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     .eq('id', child['id']);
 
                                 if (!mounted) return;
+                                if (!sheetCtx.mounted) return;
                                 Navigator.of(sheetCtx)
                                     .pop(); // close the sheet only
                                 await _loadAll();
+                                if (!mounted) return;
+                                if (!context.mounted) return;
 
                                 ScaffoldMessenger.of(this.context).showSnackBar(
                                   const SnackBar(
@@ -1551,7 +1563,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(50)),
-                    side: BorderSide(color: Colors.red.withOpacity(0.35)),
+                    side: BorderSide(color: Colors.red.withValues(alpha: 0.35)),
                     padding: const EdgeInsets.symmetric(
                         vertical: 14, horizontal: 24),
                   ),
@@ -2010,7 +2022,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   ButtonStyle _outlinedPillStyle() => OutlinedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-        side: BorderSide(color: Colors.black.withOpacity(0.18)),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
       );
 
@@ -2032,7 +2044,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       style: OutlinedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-        side: BorderSide(color: Colors.black.withOpacity(0.18)),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
       ),
     );
@@ -2058,7 +2070,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: AppTheme.bookingButtonColor.withOpacity(0.9), width: 2),
+              color: AppTheme.bookingButtonColor.withValues(alpha: 0.9),
+              width: 2),
         ),
       ),
       style: const TextStyle(fontFamily: 'CharlevoixPro'),
@@ -2148,12 +2161,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   BoxDecoration _cardDecoration() => BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
             blurRadius: 10,
             offset: const Offset(0, 4),
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
           )
         ],
       );
@@ -2165,7 +2178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: AppTheme.creamBackground,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Center(
         child: Text(

@@ -524,7 +524,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   ButtonStyle _pillOutlinedStyle() => OutlinedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-        side: BorderSide(color: Colors.black.withOpacity(0.18)),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
         padding: const EdgeInsets.symmetric(vertical: 12),
       );
 
@@ -635,12 +635,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.black.withOpacity(0.08)),
+                  border:
+                      Border.all(color: Colors.black.withValues(alpha: 0.08)),
                   boxShadow: [
                     BoxShadow(
                       blurRadius: 8,
                       offset: const Offset(0, 3),
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                     )
                   ],
                 ),
@@ -758,6 +759,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
 
     await _loadMyUserFlags();
+    if (!mounted) return false;
 
     if (_houseRulesAccepted != true) {
       await _showHouseRulesGateDialog();
@@ -1170,6 +1172,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     } catch (_) {}
 
     await _loadSlotCounts();
+    if (!mounted) return;
 
     final available = candidates.where((w) {
       if (w.workspaceType == 'MEETING_ROOM' &&
@@ -1207,6 +1210,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       );
 
       if (selection == null) return;
+      if (!mounted) return;
       meetingType = selection;
 
       meetingChoiceLabel = meetingType == MeetingBookingType.private
@@ -1517,12 +1521,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                                color: Colors.black.withOpacity(0.08)),
+                                color: Colors.black.withValues(alpha: 0.08)),
                             boxShadow: [
                               BoxShadow(
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                               )
                             ],
                           ),
@@ -1651,6 +1655,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                                   }
                                                 } catch (_) {}
 
+                                                if (!mounted) return;
+                                                if (!context.mounted) return;
                                                 await Navigator.of(context)
                                                     .push(
                                                   MaterialPageRoute(
@@ -1680,7 +1686,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                                   BorderRadius.circular(24)),
                                           side: BorderSide(
                                               color: Colors.black
-                                                  .withOpacity(0.18)),
+                                                  .withValues(alpha: 0.18)),
                                         ),
                                         child: const FittedBox(
                                           fit: BoxFit.scaleDown,
@@ -1732,12 +1738,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               border: Border.all(
                   color: isSelected
                       ? _selectedChipPink
-                      : Colors.black.withOpacity(0.08)),
+                      : Colors.black.withValues(alpha: 0.08)),
               boxShadow: [
                 BoxShadow(
                   blurRadius: 8,
                   offset: const Offset(0, 3),
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                 )
               ],
             ),

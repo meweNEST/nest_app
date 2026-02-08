@@ -83,8 +83,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       // fall back gracefully if blocked by RLS/missing row
     } finally {
-      if (!mounted) return;
-      setState(() => _loadingProfile = false);
+      if (mounted) {
+        setState(() => _loadingProfile = false);
+      }
     }
   }
 
@@ -112,8 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       // if SELECT is blocked by RLS, status won't be available
     } finally {
-      if (!mounted) return;
-      setState(() => _loadingWaitlist = false);
+      if (mounted) {
+        setState(() => _loadingWaitlist = false);
+      }
     }
   }
 
@@ -373,6 +375,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_profileRow == null && !_loadingProfile) {
       await _loadProfileRow();
     }
+    if (!mounted) return;
+    if (!context.mounted) return;
 
     final fullName = _stringOrNull(_profileRow?['full_name']);
     final split =
@@ -457,8 +461,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               } finally {
-                if (!sheetCtx.mounted) return;
-                setModalState(() => submitting = false);
+                if (sheetCtx.mounted) {
+                  setModalState(() => submitting = false);
+                }
               }
             }
 
@@ -821,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 iconColor: openingTextColor,
                 titleColor: openingTextColor,
                 contentColor: openingTextColor,
-                subcontentColor: openingTextColor.withOpacity(0.95),
+                subcontentColor: openingTextColor.withValues(alpha: 0.95),
                 icon: nestOpen
                     ? Icons.access_time_filled_rounded
                     : Icons.lock_clock,
@@ -851,7 +856,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontSize: 14,
                         fontWeight:
                             cafeOpen ? FontWeight.bold : FontWeight.normal,
-                        color: openingTextColor.withOpacity(0.95),
+                        color: openingTextColor.withValues(alpha: 0.95),
                         height: 1.35,
                       ),
                     ),
@@ -892,7 +897,7 @@ class _StepperTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
       ),
       child: Row(
         children: [
@@ -1018,7 +1023,7 @@ class _Card extends StatelessWidget {
           BoxShadow(
             blurRadius: 10,
             offset: const Offset(0, 4),
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
           ),
         ],
       ),
