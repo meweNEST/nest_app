@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/error_handler.dart';
 import 'package:nest_app/widgets/nest_app_bar.dart';
 import 'package:nest_app/widgets/nest_button.dart';
 
@@ -70,11 +71,12 @@ class _MembershipScreenState extends State<MembershipScreen> {
         return;
       }
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Could not open link.'), backgroundColor: Colors.red),
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Could not open link.',
       );
     }
   }
@@ -174,8 +176,12 @@ class _MembershipScreenState extends State<MembershipScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      // ignore: avoid_print
-      print('Error loading memberships: $e');
+      if (!mounted) return;
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Failed to load membership options. Please try again.',
+      );
     }
   }
 
@@ -254,8 +260,9 @@ class _MembershipScreenState extends State<MembershipScreen> {
 
       if (row == null) return null;
       return row;
-    } catch (_) {
-      return null;
+    } catch (e) {
+      debugPrint('Failed to fetch user membership: $e');
+      return null; // Return null so caller can handle missing data
     }
   }
 
@@ -507,19 +514,16 @@ class _MembershipScreenState extends State<MembershipScreen> {
       await supabase.rpc('purchase_pass', params: {'p_membership_id': m['id']});
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('${m['title']} activated. Enjoy your Full Day booking!'),
-          backgroundColor: Colors.green.shade700,
-        ),
+      ErrorHandler.showSuccess(
+        context,
+        '${m['title']} activated. Enjoy your Full Day booking!',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Could not activate pass: $e'),
-            backgroundColor: Colors.red),
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Could not activate pass. Please try again.',
       );
     } finally {
       if (mounted) setState(() => _purchasingPass = false);

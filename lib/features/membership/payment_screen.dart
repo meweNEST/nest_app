@@ -4,6 +4,7 @@ import 'package:flutter/services.dart'; // For PlatformException
 import 'package:flutter_stripe/flutter_stripe.dart'; // Correct Stripe imports
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nest_app/features/membership/stripe_service.dart'; // Your custom Stripe service
+import '../../core/utils/error_handler.dart';
 
 class PaymentScreen extends StatefulWidget {
   final int membershipId;
@@ -127,7 +128,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
             .replaceAll(',', '.')); // Reset to original price
       });
       if (mounted) {
-        _showSnackBar('Error checking promo code.', isError: true);
+        ErrorHandler.showError(
+          context,
+          e,
+          userMessage: 'Error checking promo code.',
+        );
       }
     }
   }
@@ -198,20 +203,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     } on StripeException catch (e) {
       // Handle Stripe-specific errors
-      _showSnackBar(
-          'Payment failed: ${e.error.message ?? "Unknown Stripe error"}',
-          isError: true);
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: e.error.message ?? 'Payment failed. Please try again.',
+      );
       debugPrint('Stripe Error: ${e.error.message}');
     } on PlatformException catch (e) {
       // Handle platform-specific exceptions (e.g., user cancelled Apple Pay)
-      _showSnackBar('Payment cancelled or failed: ${e.message}',
-          isError: false);
+      ErrorHandler.showWarning(
+        context,
+        e.message ?? 'Payment cancelled',
+      );
       debugPrint('Platform Exception: ${e.message}');
     } catch (e) {
       // Catch any other unexpected errors
       debugPrint('Unexpected payment error: $e');
-      _showSnackBar('An unexpected error occurred during payment: $e',
-          isError: true);
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'An unexpected error occurred during payment.',
+      );
     } finally {
       setState(() {
         _isProcessing = false;
@@ -251,8 +263,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       debugPrint('Payment saved to database successfully!');
     } catch (e) {
       debugPrint('Error saving payment to database: $e');
-      _showSnackBar('Error saving payment record to database: $e',
-          isError: true);
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Payment successful but failed to save record.',
+      );
     }
   }
 
