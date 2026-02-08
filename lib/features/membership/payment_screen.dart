@@ -371,10 +371,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: widget.membershipColor.withOpacity(0.1),
+                  color: widget.membershipColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: widget.membershipColor.withOpacity(0.3),
+                    color: widget.membershipColor.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -424,10 +424,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: successGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(5),
+                              color: successGreen.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                  color: successGreen.withOpacity(0.3)),
+                                  color: successGreen.withValues(alpha: 0.3)),
                             ),
                             child: Text(
                               '${widget.promoCode} ($_discountAmountDisplay)',

@@ -31,7 +31,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
+        (route) => false,
       );
     } on AuthException catch (error) {
       if (mounted) {
@@ -71,26 +71,27 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 decoration: const InputDecoration(labelText: 'New Password'),
                 obscureText: true,
                 validator: (v) =>
-                (v == null || v.length < 6) ? 'Password too short' : null,
+                    (v == null || v.length < 6) ? 'Password too short' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
                 decoration:
-                const InputDecoration(labelText: 'Confirm Password'),
+                    const InputDecoration(labelText: 'Confirm Password'),
                 obscureText: true,
-                validator: (v) =>
-                v != _passwordController.text ? 'Passwords do not match' : null,
+                validator: (v) => v != _passwordController.text
+                    ? 'Passwords do not match'
+                    : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _updatePassword,
                 child: _isLoading
                     ? const SizedBox(
-                  height: 22,
-                  width: 22,
-                  child: CircularProgressIndicator(strokeWidth: 3),
-                )
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 3),
+                      )
                     : const Text('Update Password'),
               )
             ],

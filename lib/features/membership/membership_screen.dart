@@ -279,7 +279,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
 
   ButtonStyle _pillOutlinedStyle() => OutlinedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-        side: BorderSide(color: Colors.black.withOpacity(0.18)),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
         padding: const EdgeInsets.symmetric(vertical: 12),
       );
 
@@ -387,12 +387,13 @@ class _MembershipScreenState extends State<MembershipScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.black.withOpacity(0.08)),
+                  border:
+                      Border.all(color: Colors.black.withValues(alpha: 0.08)),
                   boxShadow: [
                     BoxShadow(
                       blurRadius: 8,
                       offset: const Offset(0, 3),
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                     )
                   ],
                 ),
@@ -737,7 +738,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4))
           ],
@@ -748,7 +749,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                  color: coral.withOpacity(0.2), shape: BoxShape.circle),
+                  color: coral.withValues(alpha: 0.2), shape: BoxShape.circle),
               child: const Icon(Icons.person, color: coral, size: 40),
             ),
             const SizedBox(width: 16),
@@ -798,9 +799,9 @@ class _MembershipScreenState extends State<MembershipScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: coral.withOpacity(0.1),
+          color: coral.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: coral.withOpacity(0.3)),
+          border: Border.all(color: coral.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -938,7 +939,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                                 decoration: BoxDecoration(
                                   color: _currentPage == index
                                       ? coral
-                                      : grayText.withOpacity(0.3),
+                                      : grayText.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -1041,7 +1042,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
         boxShadow: [
           BoxShadow(
             blurRadius: active ? 15 : 6,
-            color: Colors.black.withOpacity(active ? 0.12 : 0.06),
+            color: Colors.black.withValues(alpha: active ? 0.12 : 0.06),
             offset: const Offset(0, 3),
           ),
         ],

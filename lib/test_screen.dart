@@ -43,7 +43,8 @@ class _MinimalTestScreenState extends State<MinimalTestScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
               ),
               child: const Text(
                 'DIESEN BUTTON DRÜCKEN',

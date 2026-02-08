@@ -22,12 +22,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'image': 'assets/images/onboarding_1.png',
       'title': 'Welcome to NEST!',
       'text':
-      'NEST is a community built around the idea that it really does take a village to raise a child and a business (or career). At NEST, you’ll finally breathe a sigh of relief – you’ve found your people and your place.',
+          'NEST is a community built around the idea that it really does take a village to raise a child and a business (or career). At NEST, you’ll finally breathe a sigh of relief – you’ve found your people and your place.',
     },
     {
       'image': 'assets/images/onboarding_2.png',
       'title': 'Work Productively, Completely Guilt-Free',
-      'text': 'Your child plays happily with trained childcare staff right next door.',
+      'text':
+          'Your child plays happily with trained childcare staff right next door.',
     },
     {
       'image': 'assets/images/onboarding_3.png',
@@ -38,13 +39,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'image': 'assets/images/onboarding_4.png',
       'title': 'Find Your Village',
       'text':
-      'Goodbye isolation! Meet other parents who share your rhythm, struggles, goals and values.\nWork, chat, learn, breathe – together.',
+          'Goodbye isolation! Meet other parents who share your rhythm, struggles, goals and values.\nWork, chat, learn, breathe – together.',
     },
     {
       'image': 'assets/images/onboarding_5.png',
       'title': 'Grow Together',
       'text':
-      'Join us for classes and events tailored to you and your family! Or relax and connect in our Family Café that caters to big and small humans alike.',
+          'Join us for classes and events tailored to you and your family! Or relax and connect in our Family Café that caters to big and small humans alike.',
     },
   ];
 
@@ -74,17 +75,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             SizedBox(height: index == 0 ? 0 : 140),
-
                             Image.asset(
                               slide['image']!,
                               height: 260,
                               fit: BoxFit.contain,
                             ),
-
                             const SizedBox(height: 40),
-
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 32),
                               child: Text(
                                 slide['title']!,
                                 textAlign: TextAlign.center,
@@ -95,11 +94,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 16),
-
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 32),
                               child: Text(
                                 slide['text']!,
                                 textAlign: TextAlign.center,
@@ -113,7 +111,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ],
                         ),
-
                         if (index != 0)
                           Positioned(
                             top: 0,
@@ -143,57 +140,57 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: Colors.white,
               child: isLast
                   ? Center(
-                // ✅ ONLY CHANGE: swap ElevatedButton -> NestPrimaryButton
-                child: SizedBox(
-                  width: 200, // matches your other screens' button sizing
-                  child: NestPrimaryButton(
-                    text: 'Get Started',
-                    backgroundColor: AppTheme.bookingButtonColor,
-                    textColor: Colors.white,
-                    onPressed: widget.onFinished,
-                  ),
-                ),
-              )
-                  : Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: widget.onFinished,
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        fontFamily: 'CharlevoixPro',
-                        fontSize: 16,
-                        color: AppTheme.darkText,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: List.generate(
-                      _slides.length,
-                          (i) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: _pageIndex == i ? 24 : 8,
-                        decoration: BoxDecoration(
-                          color: _pageIndex == i
-                              ? AppTheme.sageGreen
-                              : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(12),
+                      // ✅ ONLY CHANGE: swap ElevatedButton -> NestPrimaryButton
+                      child: SizedBox(
+                        width: 200, // matches your other screens' button sizing
+                        child: NestPrimaryButton(
+                          text: 'Get Started',
+                          backgroundColor: AppTheme.bookingButtonColor,
+                          textColor: Colors.white,
+                          onPressed: widget.onFinished,
                         ),
                       ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: widget.onFinished,
+                          child: const Text(
+                            'Skip',
+                            style: TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontSize: 16,
+                              color: AppTheme.darkText,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: List.generate(
+                            _slides.length,
+                            (i) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              height: 8,
+                              width: _pageIndex == i ? 24 : 8,
+                              decoration: BoxDecoration(
+                                color: _pageIndex == i
+                                    ? AppTheme.sageGreen
+                                    : Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward),
+                          onPressed: () => _controller.nextPage(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: () => _controller.nextPage(
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),

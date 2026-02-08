@@ -42,7 +42,8 @@ class _CafeScreenState extends State<CafeScreen> {
     super.initState();
     _categoryScrollController.addListener(_updateCategoryArrows);
     _loadCafeData();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateCategoryArrows());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _updateCategoryArrows());
   }
 
   @override
@@ -55,22 +56,26 @@ class _CafeScreenState extends State<CafeScreen> {
 
   Future<void> _confirmAndLogout() async {
     final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout?', style: TextStyle(fontFamily: 'SweetAndSalty')),
-        content: const Text('Are you sure you want to log out?', style: TextStyle(fontFamily: 'CharlevoixPro')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Logout?',
+                style: TextStyle(fontFamily: 'SweetAndSalty')),
+            content: const Text('Are you sure you want to log out?',
+                style: TextStyle(fontFamily: 'CharlevoixPro')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Logout',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Logout', style: TextStyle(fontFamily: 'CharlevoixPro')),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!ok) return;
@@ -82,8 +87,12 @@ class _CafeScreenState extends State<CafeScreen> {
 
   Future<void> _loadCafeData() async {
     try {
-      final categoryResponse = await supabase.from('cafe_categories').select().order('display_order');
-      final itemsResponse = await supabase.from('cafe_items').select().order('id');
+      final categoryResponse = await supabase
+          .from('cafe_categories')
+          .select()
+          .order('display_order');
+      final itemsResponse =
+          await supabase.from('cafe_items').select().order('id');
 
       setState(() {
         categories = List<Map<String, dynamic>>.from(categoryResponse);
@@ -91,7 +100,8 @@ class _CafeScreenState extends State<CafeScreen> {
         _loading = false;
       });
 
-      WidgetsBinding.instance.addPostFrameCallback((_) => _updateCategoryArrows());
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _updateCategoryArrows());
     } catch (e) {
       // ignore: avoid_print
       print('Error loading cafe data: $e');
@@ -107,7 +117,8 @@ class _CafeScreenState extends State<CafeScreen> {
     final canScroll = pos.maxScrollExtent > 0;
 
     final showLeft = canScroll && _categoryScrollController.offset > 2;
-    final showRight = canScroll && _categoryScrollController.offset < pos.maxScrollExtent - 2;
+    final showRight =
+        canScroll && _categoryScrollController.offset < pos.maxScrollExtent - 2;
 
     if (showLeft != _showLeftArrow || showRight != _showRightArrow) {
       setState(() {
@@ -187,7 +198,10 @@ class _CafeScreenState extends State<CafeScreen> {
   List<String> _stringListFromAny(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) {
-      return raw.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
+      return raw
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
     if (raw is String) {
       final s = raw.trim();
@@ -198,7 +212,10 @@ class _CafeScreenState extends State<CafeScreen> {
         try {
           final decoded = jsonDecode(s);
           if (decoded is List) {
-            return decoded.map((e) => e.toString().trim()).where((x) => x.isNotEmpty).toList();
+            return decoded
+                .map((e) => e.toString().trim())
+                .where((x) => x.isNotEmpty)
+                .toList();
           }
         } catch (_) {
           // fall back
@@ -206,7 +223,11 @@ class _CafeScreenState extends State<CafeScreen> {
       }
 
       // fallback: comma separated
-      return s.split(',').map((x) => x.trim()).where((x) => x.isNotEmpty).toList();
+      return s
+          .split(',')
+          .map((x) => x.trim())
+          .where((x) => x.isNotEmpty)
+          .toList();
     }
     return [];
   }
@@ -243,7 +264,8 @@ class _CafeScreenState extends State<CafeScreen> {
 
   Map<String, num?> _effectiveNutritionForItem(Map<String, dynamic> item) {
     // Prefer per-portion fields; fallback to legacy fields where appropriate.
-    final kcal = _num(item['energy_kcal_portion']) ?? _num(item['calories_kcal']);
+    final kcal =
+        _num(item['energy_kcal_portion']) ?? _num(item['calories_kcal']);
     final kj = _num(item['energy_kj_portion']);
 
     final fat = _num(item['fat_g_portion']) ?? _num(item['fat_g']);
@@ -342,7 +364,8 @@ class _CafeScreenState extends State<CafeScreen> {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Row(
                               children: [
-                                Text(meta['emoji']!, style: const TextStyle(fontSize: 18)),
+                                Text(meta['emoji']!,
+                                    style: const TextStyle(fontSize: 18)),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -390,19 +413,29 @@ class _CafeScreenState extends State<CafeScreen> {
       final s = d.toStringAsFixed(decimals);
 
       // remove trailing .0 / .00 etc
-      return s.replaceAll(RegExp(r'\.?0+)'), '');
+      return s.replaceAll(RegExp(r'\.0+$'), '');
     }
 
     final nutritionRows = <Widget>[
-      if (hasVal('kcal')) _nutritionRow('Calories', '${fmt(nutrition['kcal'])} kcal'),
+      if (hasVal('kcal'))
+        _nutritionRow('Calories', '${fmt(nutrition['kcal'])} kcal'),
       if (hasVal('kj')) _nutritionRow('Energy', '${fmt(nutrition['kj'])} kJ'),
-      if (hasVal('protein_g')) _nutritionRow('Protein', '${fmt(nutrition['protein_g'], decimals: 1)} g'),
-      if (hasVal('carbs_g')) _nutritionRow('Carbs', '${fmt(nutrition['carbs_g'], decimals: 1)} g'),
-      if (hasVal('sugars_g')) _nutritionRow('Sugars', '${fmt(nutrition['sugars_g'], decimals: 1)} g'),
-      if (hasVal('fat_g')) _nutritionRow('Fat', '${fmt(nutrition['fat_g'], decimals: 1)} g'),
-      if (hasVal('sat_fat_g')) _nutritionRow('Saturated fat', '${fmt(nutrition['sat_fat_g'], decimals: 1)} g'),
-      if (hasVal('fiber_g')) _nutritionRow('Fiber', '${fmt(nutrition['fiber_g'], decimals: 1)} g'),
-      if (hasVal('salt_g')) _nutritionRow('Salt', '${fmt(nutrition['salt_g'], decimals: 2)} g'),
+      if (hasVal('protein_g'))
+        _nutritionRow(
+            'Protein', '${fmt(nutrition['protein_g'], decimals: 1)} g'),
+      if (hasVal('carbs_g'))
+        _nutritionRow('Carbs', '${fmt(nutrition['carbs_g'], decimals: 1)} g'),
+      if (hasVal('sugars_g'))
+        _nutritionRow('Sugars', '${fmt(nutrition['sugars_g'], decimals: 1)} g'),
+      if (hasVal('fat_g'))
+        _nutritionRow('Fat', '${fmt(nutrition['fat_g'], decimals: 1)} g'),
+      if (hasVal('sat_fat_g'))
+        _nutritionRow(
+            'Saturated fat', '${fmt(nutrition['sat_fat_g'], decimals: 1)} g'),
+      if (hasVal('fiber_g'))
+        _nutritionRow('Fiber', '${fmt(nutrition['fiber_g'], decimals: 1)} g'),
+      if (hasVal('salt_g'))
+        _nutritionRow('Salt', '${fmt(nutrition['salt_g'], decimals: 2)} g'),
     ];
 
     showModalBottomSheet(
@@ -474,7 +507,8 @@ class _CafeScreenState extends State<CafeScreen> {
                               padding: const EdgeInsets.only(bottom: 10),
                               child: Row(
                                 children: [
-                                  Text(meta['emoji']!, style: const TextStyle(fontSize: 18)),
+                                  Text(meta['emoji']!,
+                                      style: const TextStyle(fontSize: 18)),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
@@ -589,89 +623,93 @@ class _CafeScreenState extends State<CafeScreen> {
     final keys = allergenKeys.where(_allergenMeta.containsKey).toList()..sort();
 
     return (await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text(
-            'Before you checkout',
-            style: TextStyle(
-              fontFamily: 'SweetAndSalty',
-              fontSize: 26,
-              color: AppTheme.darkText,
-            ),
-          ),
-          content: keys.isEmpty
-              ? const Text(
-            'If you have severe allergies, please ask our team before ordering.',
-            style: TextStyle(
-              fontFamily: 'CharlevoixPro',
-              fontSize: 15,
-              color: AppTheme.secondaryText,
-            ),
-          )
-              : Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Your selected items may contain:',
+          context: context,
+          barrierDismissible: true,
+          builder: (_) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18)),
+              title: const Text(
+                'Before you checkout',
                 style: TextStyle(
-                  fontFamily: 'CharlevoixPro',
-                  fontSize: 15,
-                  color: AppTheme.secondaryText,
+                  fontFamily: 'SweetAndSalty',
+                  fontSize: 26,
+                  color: AppTheme.darkText,
                 ),
               ),
-              const SizedBox(height: 14),
-              ...keys.map((k) {
-                final meta = _allergenMeta[k]!;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      Text(meta['emoji']!, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          meta['label']!,
-                          style: const TextStyle(
+              content: keys.isEmpty
+                  ? const Text(
+                      'If you have severe allergies, please ask our team before ordering.',
+                      style: TextStyle(
+                        fontFamily: 'CharlevoixPro',
+                        fontSize: 15,
+                        color: AppTheme.secondaryText,
+                      ),
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Your selected items may contain:',
+                          style: TextStyle(
                             fontFamily: 'CharlevoixPro',
-                            fontSize: 16,
-                            color: AppTheme.darkText,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: AppTheme.secondaryText,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              const SizedBox(height: 6),
-              const Text(
-                'If you have severe allergies, please ask our team.',
-                style: TextStyle(
-                  fontFamily: 'CharlevoixPro',
-                  fontSize: 13,
-                  color: AppTheme.secondaryText,
+                        const SizedBox(height: 14),
+                        ...keys.map((k) {
+                          final meta = _allergenMeta[k]!;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              children: [
+                                Text(meta['emoji']!,
+                                    style: const TextStyle(fontSize: 18)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    meta['label']!,
+                                    style: const TextStyle(
+                                      fontFamily: 'CharlevoixPro',
+                                      fontSize: 16,
+                                      color: AppTheme.darkText,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'If you have severe allergies, please ask our team.',
+                          style: TextStyle(
+                            fontFamily: 'CharlevoixPro',
+                            fontSize: 13,
+                            color: AppTheme.secondaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Review order',
+                      style: TextStyle(fontFamily: 'CharlevoixPro')),
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Review order', style: TextStyle(fontFamily: 'CharlevoixPro')),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('I understand', style: TextStyle(fontFamily: 'CharlevoixPro')),
-            ),
-          ],
-        );
-      },
-    )) ??
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('I understand',
+                      style: TextStyle(fontFamily: 'CharlevoixPro')),
+                ),
+              ],
+            );
+          },
+        )) ??
         false;
   }
 
@@ -687,7 +725,7 @@ class _CafeScreenState extends State<CafeScreen> {
             Positioned.fill(
               child: CustomPaint(
                 painter: _DiagonalSlashPainter(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: 0.95),
                   strokeWidth: 2.2,
                 ),
               ),
@@ -717,7 +755,7 @@ class _CafeScreenState extends State<CafeScreen> {
               BoxShadow(
                 blurRadius: 6,
                 offset: const Offset(0, 2),
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
               )
             ],
           ),
@@ -744,7 +782,7 @@ class _CafeScreenState extends State<CafeScreen> {
             BoxShadow(
               blurRadius: 6,
               offset: const Offset(0, 2),
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
             )
           ],
         ),
@@ -799,7 +837,6 @@ class _CafeScreenState extends State<CafeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: NestAppBar(
         actions: [
           IconButton(
@@ -809,7 +846,6 @@ class _CafeScreenState extends State<CafeScreen> {
           ),
         ],
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
@@ -824,9 +860,9 @@ class _CafeScreenState extends State<CafeScreen> {
         child: cart.isEmpty
             ? const SizedBox.shrink(key: ValueKey('fab-empty'))
             : KeyedSubtree(
-          key: const ValueKey('fab-cart'),
-          child: _cartFab(),
-        ),
+                key: const ValueKey('fab-cart'),
+                child: _cartFab(),
+              ),
       ),
       body: SafeArea(
         top: false,
@@ -867,7 +903,8 @@ class _CafeScreenState extends State<CafeScreen> {
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
                         itemBuilder: (_, index) {
                           final key = allergenFilterKeys[index];
-                          final selected = _selectedAllergenFilters.contains(key);
+                          final selected =
+                              _selectedAllergenFilters.contains(key);
                           final meta = _allergenMeta[key]!;
 
                           return _filterChip(
@@ -881,7 +918,8 @@ class _CafeScreenState extends State<CafeScreen> {
                                 }
                               });
                             },
-                            child: _crossedEmoji(meta['emoji']!, crossed: selected),
+                            child: _crossedEmoji(meta['emoji']!,
+                                crossed: selected),
                           );
                         },
                       ),
@@ -891,7 +929,8 @@ class _CafeScreenState extends State<CafeScreen> {
                   _ghostCircleButton(
                     icon: Icons.info_outline,
                     tooltip: 'Allergen info',
-                    onPressed: () => _showAllergenLegendSheet(allergenFilterKeys),
+                    onPressed: () =>
+                        _showAllergenLegendSheet(allergenFilterKeys),
                   ),
                 ],
               ),
@@ -936,27 +975,33 @@ class _CafeScreenState extends State<CafeScreen> {
                             }),
                             child: Container(
                               margin: const EdgeInsets.symmetric(vertical: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
-                                color: selected ? AppTheme.sageGreen : Colors.white,
+                                color: selected
+                                    ? AppTheme.sageGreen
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
-                                    color: Colors.black.withOpacity(0.08),
+                                    color: Colors.black.withValues(alpha: 0.08),
                                   )
                                 ],
                               ),
                               child: Row(
                                 children: [
-                                  Text(c['icon'] ?? '', style: const TextStyle(fontSize: 16)),
+                                  Text(c['icon'] ?? '',
+                                      style: const TextStyle(fontSize: 16)),
                                   const SizedBox(width: 6),
                                   Text(
                                     c['name'] ?? '',
                                     style: TextStyle(
                                       fontFamily: 'CharlevoixPro',
-                                      color: selected ? Colors.white : AppTheme.darkText,
+                                      color: selected
+                                          ? Colors.white
+                                          : AppTheme.darkText,
                                     ),
                                   ),
                                 ],
@@ -1012,7 +1057,7 @@ class _CafeScreenState extends State<CafeScreen> {
           BoxShadow(
             blurRadius: 10,
             offset: const Offset(0, 4),
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
           )
         ],
       ),
@@ -1067,7 +1112,8 @@ class _CafeScreenState extends State<CafeScreen> {
                           if (meta == null) return const SizedBox.shrink();
                           return Semantics(
                             label: meta['label']!,
-                            child: Text(meta['emoji']!, style: const TextStyle(fontSize: 16)),
+                            child: Text(meta['emoji']!,
+                                style: const TextStyle(fontSize: 16)),
                           );
                         }).toList(),
                       ),
@@ -1152,79 +1198,82 @@ class _CafeScreenState extends State<CafeScreen> {
                     Expanded(
                       child: cartEntries.isEmpty
                           ? const Center(
-                        child: Text(
-                          'Your cart is empty.',
-                          style: TextStyle(
-                            fontFamily: 'CharlevoixPro',
-                            color: AppTheme.secondaryText,
-                          ),
-                        ),
-                      )
+                              child: Text(
+                                'Your cart is empty.',
+                                style: TextStyle(
+                                  fontFamily: 'CharlevoixPro',
+                                  color: AppTheme.secondaryText,
+                                ),
+                              ),
+                            )
                           : ListView.builder(
-                        itemCount: cartEntries.length,
-                        itemBuilder: (_, index) {
-                          final entry = cartEntries[index];
-                          final itemId = entry.key;
-                          final qty = entry.value;
-                          final item = items.firstWhere((i) => i['id'] == itemId);
+                              itemCount: cartEntries.length,
+                              itemBuilder: (_, index) {
+                                final entry = cartEntries[index];
+                                final itemId = entry.key;
+                                final qty = entry.value;
+                                final item =
+                                    items.firstWhere((i) => i['id'] == itemId);
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 14),
+                                  child: Row(
                                     children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item['name'],
+                                              style: const TextStyle(
+                                                fontFamily: 'CharlevoixPro',
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '€${((item['price'] as num) * qty).toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontFamily: 'CharlevoixPro',
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () {
+                                          _removeFromCart(itemId);
+                                          modalSetState(() {});
+                                        },
+                                        icon: const Icon(Icons.remove_circle,
+                                            color: Colors.grey),
+                                      ),
                                       Text(
-                                        item['name'],
+                                        qty.toString(),
                                         style: const TextStyle(
                                           fontFamily: 'CharlevoixPro',
                                           fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '€${((item['price'] as num) * qty).toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontFamily: 'CharlevoixPro',
-                                          fontWeight: FontWeight.bold,
+                                      IconButton(
+                                        onPressed: () {
+                                          _addToCart(itemId);
+                                          modalSetState(() {});
+                                        },
+                                        icon: const Icon(
+                                          Icons.add_circle,
+                                          size: 28,
+                                          color: AppTheme.sageGreen,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    _removeFromCart(itemId);
-                                    modalSetState(() {});
-                                  },
-                                  icon: const Icon(Icons.remove_circle, color: Colors.grey),
-                                ),
-                                Text(
-                                  qty.toString(),
-                                  style: const TextStyle(
-                                    fontFamily: 'CharlevoixPro',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    _addToCart(itemId);
-                                    modalSetState(() {});
-                                  },
-                                  icon: const Icon(
-                                    Icons.add_circle,
-                                    size: 28,
-                                    color: AppTheme.sageGreen,
-                                  ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     ),
                     const SizedBox(height: 18),
                     NestPrimaryButton(

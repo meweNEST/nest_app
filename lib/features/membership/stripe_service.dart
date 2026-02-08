@@ -74,7 +74,9 @@ class StripeService {
         },
       },
       'current_period_start': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      'current_period_end': DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch ~/ 1000,
+      'current_period_end':
+          DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch ~/
+              1000,
     };
   }
 }

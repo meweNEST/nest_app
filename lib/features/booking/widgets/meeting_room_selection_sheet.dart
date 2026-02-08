@@ -15,18 +15,22 @@ class MeetingRoomSelectionSheet extends StatefulWidget {
   });
 
   @override
-  State<MeetingRoomSelectionSheet> createState() => _MeetingRoomSelectionSheetState();
+  State<MeetingRoomSelectionSheet> createState() =>
+      _MeetingRoomSelectionSheetState();
 }
 
 class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
   MeetingBookingType? _selectedOption;
 
   // 'full' does not exist in our enum; premium is the highest tier.
-  bool get _canBookPrivately => widget.currentUserMembership == UserMembership.premium;
+  bool get _canBookPrivately =>
+      widget.currentUserMembership == UserMembership.premium;
 
   static const Color _nestGreen = Color.fromRGBO(178, 229, 209, 1);
-  static const Color _nestGreenDark = Color(0xFF1B8F5A); // darker green outline highlight
-  static const Color _nestGreenDarker = Color(0xFF0E6B41); // selected + eligible emphasis
+  static const Color _nestGreenDark =
+      Color(0xFF1B8F5A); // darker green outline highlight
+  static const Color _nestGreenDarker =
+      Color(0xFF0E6B41); // selected + eligible emphasis
   static const Color _nestRed = Color.fromRGBO(229, 62, 62, 1);
 
   @override
@@ -74,8 +78,11 @@ class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
 
             _buildSelectionTile(
               title: 'Book Entire Room (Private)',
-              subtitle: 'Your own room for deep focus — no distractions, no sharing.',
-              icon: _canBookPrivately ? Icons.lock_open_rounded : Icons.lock_outline,
+              subtitle:
+                  'Your own room for deep focus — no distractions, no sharing.',
+              icon: _canBookPrivately
+                  ? Icons.lock_open_rounded
+                  : Icons.lock_outline,
               value: MeetingBookingType.private,
               isEnabled: _canBookPrivately,
               disabledReason: 'Only available for Premium Members',
@@ -114,9 +121,11 @@ class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
     final bool isSelected = _selectedOption == value;
 
     // Base colors
-    final Color tileColor = isEnabled ? const Color.fromRGBO(235, 245, 241, 1) : Colors.grey[200]!;
+    final Color tileColor =
+        isEnabled ? const Color.fromRGBO(235, 245, 241, 1) : Colors.grey[200]!;
     final Color textColor = isEnabled ? AppTheme.darkText : Colors.grey[500]!;
-    final Color subTextColor = isEnabled ? AppTheme.secondaryText : Colors.grey[600]!;
+    final Color subTextColor =
+        isEnabled ? AppTheme.secondaryText : Colors.grey[600]!;
 
     // Border logic:
     // - If eligible for private booking: darker green outline (even if not selected)
@@ -124,17 +133,17 @@ class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
     // - Otherwise: selected uses light green like before
     final Color borderColor = emphasize
         ? (isSelected ? _nestGreenDarker : _nestGreenDark)
-        : (isSelected ? _nestGreen : Colors.black.withOpacity(0.06));
+        : (isSelected ? _nestGreen : Colors.black.withValues(alpha: 0.06));
 
     final double borderWidth = (isSelected || emphasize) ? 2.0 : 1.0;
 
     return GestureDetector(
       onTap: isEnabled
           ? () {
-        setState(() {
-          _selectedOption = value;
-        });
-      }
+              setState(() {
+                _selectedOption = value;
+              });
+            }
           : null,
       child: Container(
         padding: const EdgeInsets.all(16.0),
@@ -147,12 +156,12 @@ class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
           ),
           boxShadow: emphasize
               ? [
-            BoxShadow(
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-              color: _nestGreenDark.withOpacity(0.10),
-            )
-          ]
+                  BoxShadow(
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    color: _nestGreenDark.withValues(alpha: 0.10),
+                  )
+                ]
               : null,
         ),
         child: Column(
@@ -176,11 +185,13 @@ class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
                 if (showExclusiveBadge) ...[
                   const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _nestGreenDark.withOpacity(0.12),
+                      color: _nestGreenDark.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: _nestGreenDark.withOpacity(0.45)),
+                      border: Border.all(
+                          color: _nestGreenDark.withValues(alpha: 0.45)),
                     ),
                     child: const Text(
                       'EXCLUSIVE',
@@ -253,7 +264,8 @@ class _MeetingRoomSelectionSheetState extends State<MeetingRoomSelectionSheet> {
                     ignoring: !canContinue,
                     child: NestPrimaryButton(
                       text: 'CONTINUE',
-                      onPressed: () => Navigator.of(context).pop(_selectedOption),
+                      onPressed: () =>
+                          Navigator.of(context).pop(_selectedOption),
                       backgroundColor: _nestGreen,
                       textColor: const Color(0xFF333333),
                     ),

@@ -42,35 +42,36 @@ class _LoginScreenState extends State<LoginScreen> {
   // ✅ NEW: Continue as guest (with popup)
   Future<void> _continueAsGuest() async {
     final proceed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Continue as guest?',
-          style: TextStyle(fontFamily: 'SweetAndSalty'),
-        ),
-        content: const Text(
-          'You can explore the schedule and map, but you can’t book without an account.\n\n'
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text(
+              'Continue as guest?',
+              style: TextStyle(fontFamily: 'SweetAndSalty'),
+            ),
+            content: const Text(
+              'You can explore the schedule and map, but you can’t book without an account.\n\n'
               'You can log in or register anytime.',
-          style: TextStyle(fontFamily: 'CharlevoixPro'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'Back to login',
               style: TextStyle(fontFamily: 'CharlevoixPro'),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text(
+                  'Back to login',
+                  style: TextStyle(fontFamily: 'CharlevoixPro'),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(
+                      fontFamily: 'CharlevoixPro', fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Continue',
-              style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!proceed) return;
@@ -150,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -183,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -205,10 +206,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                 ),
@@ -221,7 +225,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Checkbox(
                     value: _acceptedTerms,
-                    onChanged: (value) => setState(() => _acceptedTerms = value ?? false),
+                    onChanged: (value) =>
+                        setState(() => _acceptedTerms = value ?? false),
                   ),
                   Expanded(
                     child: Wrap(

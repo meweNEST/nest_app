@@ -85,7 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green,
+        backgroundColor:
+            isError ? Theme.of(context).colorScheme.error : Colors.green,
       ),
     );
   }
@@ -108,72 +109,75 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     final go = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Continue as guest?',
-                style: TextStyle(
-                  fontFamily: 'SweetAndSalty',
-                  fontSize: 22,
-                  color: AppTheme.darkText,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'You can explore the app as a guest.\n\nBooking will require logging in.',
-                style: TextStyle(
-                  fontFamily: 'CharlevoixPro',
-                  fontSize: 14,
-                  color: AppTheme.secondaryText,
-                  height: 1.3,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 18),
-              Row(
+          context: context,
+          barrierDismissible: true,
+          builder: (ctx) => Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-                        side: BorderSide(color: Colors.black.withOpacity(0.18)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.darkText,
+                  const Text(
+                    'Continue as guest?',
+                    style: TextStyle(
+                      fontFamily: 'SweetAndSalty',
+                      fontSize: 22,
+                      color: AppTheme.darkText,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'You can explore the app as a guest.\n\nBooking will require logging in.',
+                    style: TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      fontSize: 14,
+                      color: AppTheme.secondaryText,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50)),
+                            side: BorderSide(
+                                color: Colors.black.withValues(alpha: 0.18)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text(
+                            'Back',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.darkText,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: NestPrimaryButton(
-                      text: 'Continue',
-                      backgroundColor: const Color(0xFFB2E5D1),
-                      textColor: Colors.white,
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: NestPrimaryButton(
+                          text: 'Continue',
+                          backgroundColor: const Color(0xFFB2E5D1),
+                          textColor: Colors.white,
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!go || !mounted) return;
@@ -220,7 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
               _buildFloatingInput(controller: _emailController, label: "Email"),
               const SizedBox(height: 16),
               _buildFloatingInput(
@@ -229,13 +232,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscure: !_isPasswordVisible,
                 suffix: IconButton(
                   icon: Icon(
-                    _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    _isPasswordVisible
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: Colors.grey,
                   ),
-                  onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                  onPressed: () =>
+                      setState(() => _isPasswordVisible = !_isPasswordVisible),
                 ),
               ),
-
               Align(
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
@@ -253,9 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
               Center(
                 child: SizedBox(
                   width: 200,
@@ -270,11 +273,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               _buildSignupText(),
-
               const SizedBox(height: 10),
               RichText(
                 text: TextSpan(
@@ -291,12 +291,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.bold,
                         color: _guestLinkColor,
                       ),
-                      recognizer: TapGestureRecognizer()..onTap = _handleContinueAsGuest,
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = _handleContinueAsGuest,
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 60),
             ],
           ),
@@ -317,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -347,7 +347,8 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           suffixIcon: suffix,
         ),
       ),
@@ -466,28 +467,36 @@ class _SignUpDialogState extends State<SignUpDialog> {
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(labelText: 'Email'),
-              validator: (v) => v != null && v.contains('@') ? null : 'Enter a valid email',
+              validator: (v) =>
+                  v != null && v.contains('@') ? null : 'Enter a valid email',
             ),
             TextFormField(
               controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
-              validator: (v) => v != null && v.length >= 6 ? null : 'Min. 6 characters',
+              validator: (v) =>
+                  v != null && v.length >= 6 ? null : 'Min. 6 characters',
             ),
             TextFormField(
               controller: _confirmPasswordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Confirm Password'),
-              validator: (v) => v == _passwordController.text ? null : 'Passwords do not match',
+              validator: (v) => v == _passwordController.text
+                  ? null
+                  : 'Passwords do not match',
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
         ElevatedButton(
           onPressed: _isLoading ? null : _performSignUp,
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Sign Up'),
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Sign Up'),
         ),
       ],
     );
@@ -523,7 +532,8 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
 
       if (mounted) {
         Navigator.pop(context);
-        widget.onResult('Success! A password reset link has been sent.', isError: false);
+        widget.onResult('Success! A password reset link has been sent.',
+            isError: false);
       }
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -551,16 +561,21 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(labelText: 'Email'),
-              validator: (v) => v != null && v.contains('@') ? null : 'Enter a valid email',
+              validator: (v) =>
+                  v != null && v.contains('@') ? null : 'Enter a valid email',
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
         ElevatedButton(
           onPressed: _isLoading ? null : _sendResetLink,
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Send Link'),
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Send Link'),
         ),
       ],
     );

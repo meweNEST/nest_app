@@ -49,7 +49,8 @@ Future<void> main() async {
 // Scroll behavior for all platforms
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
-  Set<PointerDeviceKind> get dragDevices => {PointerDeviceKind.touch, PointerDeviceKind.mouse};
+  Set<PointerDeviceKind> get dragDevices =>
+      {PointerDeviceKind.touch, PointerDeviceKind.mouse};
 }
 
 class NestApp extends StatelessWidget {

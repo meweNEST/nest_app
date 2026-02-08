@@ -28,14 +28,14 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
 
     try {
       print('🔍 Loading cafe menu items from Supabase...');
-      
+
       final response = await _supabase
           .from('cafe_menu_items')
           .select()
           .order('name_de', ascending: true);
-      
+
       print('✅ Menu items loaded: ${response.length} items');
-      
+
       setState(() {
         _menuItems = List<Map<String, dynamic>>.from(response);
         _isLoading = false;
@@ -148,7 +148,7 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
-                          color: const Color(0xFF7CAE7A).withOpacity(0.1),
+                          color: const Color(0xFF7CAE7A).withValues(alpha: 0.1),
                           child: Row(
                             children: [
                               const Icon(
@@ -188,7 +188,7 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
                                     height: 48,
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF7CAE7A)
-                                          .withOpacity(0.1),
+                                          .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Icon(
@@ -198,7 +198,9 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
                                     ),
                                   ),
                                   title: Text(
-                                    item['name_de'] ?? item['name_en'] ?? 'Unknown',
+                                    item['name_de'] ??
+                                        item['name_en'] ??
+                                        'Unknown',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -208,7 +210,9 @@ class _SupabaseTestScreenState extends State<SupabaseTestScreen> {
                                   subtitle: Padding(
                                     padding: const EdgeInsets.only(top: 4),
                                     child: Text(
-                                      item['description_de'] ?? item['description_en'] ?? '',
+                                      item['description_de'] ??
+                                          item['description_en'] ??
+                                          '',
                                       style: const TextStyle(
                                         color: Color(0xFF757575),
                                         fontSize: 13,

@@ -32,8 +32,8 @@ class CalendarWidget extends StatelessWidget {
       case OccupancyStatus.low:
         return _dayGreen;
 
-    // We treat both as "busy" (50–99%) to be safe,
-    // even if 'high' is not used by your current logic.
+      // We treat both as "busy" (50–99%) to be safe,
+      // even if 'high' is not used by your current logic.
       case OccupancyStatus.medium:
       case OccupancyStatus.high:
         return _dayOrange;
@@ -68,14 +68,16 @@ class CalendarWidget extends StatelessWidget {
         titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
       calendarStyle: CalendarStyle(
-        todayDecoration: const BoxDecoration(color: Colors.transparent, shape: BoxShape.circle),
+        todayDecoration: const BoxDecoration(
+            color: Colors.transparent, shape: BoxShape.circle),
         todayTextStyle: const TextStyle(color: Colors.black),
         selectedDecoration: BoxDecoration(
-          color: Colors.blueAccent.withOpacity(0.12),
+          color: Colors.blueAccent.withValues(alpha: 0.12),
           shape: BoxShape.circle,
           border: Border.all(color: AppTheme.sageGreen, width: 2),
         ),
-        selectedTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        selectedTextStyle:
+            const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         disabledTextStyle: TextStyle(color: Colors.grey.shade400),
         outsideTextStyle: const TextStyle(color: Colors.transparent),
       ),
@@ -106,14 +108,17 @@ class CalendarWidget extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.all(4.0),
             decoration: BoxDecoration(
-              color: baseColor == Colors.transparent ? Colors.blueAccent.withOpacity(0.12) : baseColor.withOpacity(0.75),
+              color: baseColor == Colors.transparent
+                  ? Colors.blueAccent.withValues(alpha: 0.12)
+                  : baseColor.withValues(alpha: 0.75),
               shape: BoxShape.circle,
               border: Border.all(color: AppTheme.sageGreen, width: 2),
             ),
             child: Center(
               child: Text(
                 day.day.toString(),
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold),
               ),
             ),
           );

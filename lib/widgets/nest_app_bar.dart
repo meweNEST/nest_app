@@ -30,7 +30,8 @@ class NestAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.baseLogoHeight = 54,
   });
 
-  double _clamp(double v, double min, double max) => v < min ? min : (v > max ? max : v);
+  double _clamp(double v, double min, double max) =>
+      v < min ? min : (v > max ? max : v);
 
   double _scaleForWidth(double w) {
     if (w < 360) return 0.92;
