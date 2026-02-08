@@ -105,8 +105,20 @@ class _AuthRedirectState extends State<AuthRedirect> {
   @override
   Widget build(BuildContext context) {
     if (_showOnboarding == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/images/nest_logo.png', height: 120),
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFB2E5D1)),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -118,8 +130,21 @@ class _AuthRedirectState extends State<AuthRedirect> {
       stream: _supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/images/nest_logo.png', height: 120),
+                  const SizedBox(height: 24),
+                  const CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFFB2E5D1)),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 

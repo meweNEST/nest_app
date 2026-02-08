@@ -32,10 +32,14 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Extract nickname from email (part before @) as default
+    final nickname = email.split('@').first;
+
     await supabase.from('users').upsert(
       {
         'id': user.id,
         'email': email.trim(),
+        'nickname': nickname,
       },
       onConflict: 'id',
     );
@@ -401,8 +405,11 @@ class _SignUpDialogState extends State<SignUpDialog> {
     final email = user.email;
     if (email == null || email.trim().isEmpty) return;
 
+    // Extract nickname from email (part before @) as default
+    final nickname = email.split('@').first;
+
     await supabase.from('users').upsert(
-      {'id': user.id, 'email': email.trim()},
+      {'id': user.id, 'email': email.trim(), 'nickname': nickname},
       onConflict: 'id',
     );
   }
