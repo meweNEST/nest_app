@@ -5,6 +5,7 @@ import 'package:nest_app/widgets/nest_button.dart';
 
 import 'package:nest_app/widgets/nest_app_bar.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/error_handler.dart';
 import '../booking/models/booking_models.dart';
 import '../booking/widgets/calendar_widget.dart';
 import '../booking/screens/workspace_map_screen.dart';
@@ -225,8 +226,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _membershipStatus = status.isEmpty ? null : status;
         _houseRulesAccepted = accepted;
       });
-    } catch (_) {
-      // ignore
+    } catch (e) {
+      // Log error but don't show to user (non-critical, defaults will be used)
+      debugPrint('Failed to load user membership flags: $e');
     }
   }
 
@@ -337,7 +339,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         setState(() => selectedTimeSlot = 'Full Day');
         await _loadSlotCounts();
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to check day pass entitlement: $e');
       if (!mounted) return;
       setState(() {
         _passOnlyFullDay = _isDayPassActive;
@@ -479,8 +482,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         if (_isFullDayRange(startLocal, endLocal)) count++;
       }
       return count;
-    } catch (_) {
-      return 0;
+    } catch (e) {
+      debugPrint('Failed to count day pass bookings: $e');
+      return 0; // Return 0 to allow booking attempt
     }
   }
 
@@ -814,7 +818,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _showNeedsEntitlementSnack(reason);
         return false;
       }
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return false;
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Unable to verify booking permissions. Please try again.',
+      );
+      return false;
+    }
 
     return true;
   }
@@ -975,7 +987,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
       if (!mounted) return;
       setState(() => _occupancyMap = newMap);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to load calendar occupancy: $e');
+      // Non-critical error - calendar will show without occupancy indicators
+    }
   }
 
   Future<void> _loadSlotCounts() async {
@@ -1013,9 +1028,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _privateBookedMeetingRoomIds = privateRooms;
         _loadingSlotCounts = false;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to load slot availability: $e');
       if (!mounted) return;
       setState(() => _loadingSlotCounts = false);
+      // Non-critical - workspace selection will still work without live counts
     }
   }
 
@@ -1169,7 +1186,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _showOverlapSnack();
         return;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to check for booking overlap: $e');
+      // Continue with booking flow - server will catch overlap if it exists
+    }
 
     await _loadSlotCounts();
     if (!mounted) return;
@@ -1304,13 +1324,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      final friendly = _looksLikeOverlapException(e)
+      final userMessage = _looksLikeOverlapException(e)
           ? 'You already have a booking in this time slot. Please choose another slot.'
           : 'Booking failed. Please try again.';
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendly), backgroundColor: Colors.red),
-      );
+      ErrorHandler.showError(context, e, userMessage: userMessage);
     }
   }
 
@@ -1653,7 +1671,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                                     _showOverlapSnack();
                                                     return;
                                                   }
-                                                } catch (_) {}
+                                                } catch (e) {
+                                                  debugPrint(
+                                                      'Failed to check for booking overlap: $e');
+                                                  // Continue - server will catch overlap if it exists
+                                                }
 
                                                 if (!mounted) return;
                                                 if (!context.mounted) return;
