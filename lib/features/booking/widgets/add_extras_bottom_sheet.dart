@@ -49,7 +49,9 @@ class _AddExtrasBottomSheetState extends State<AddExtrasBottomSheet> {
 
   DateTime? _parseDate(dynamic v) {
     if (v == null) return null;
-    if (v is String) return DateTime.tryParse(v); // date columns return 'YYYY-MM-DD'
+    if (v is String) {
+      return DateTime.tryParse(v); // date columns return 'YYYY-MM-DD'
+    }
     return null;
   }
 
@@ -70,7 +72,8 @@ class _AddExtrasBottomSheetState extends State<AddExtrasBottomSheet> {
       // public.users has RLS: auth.uid() = id (SELECT allowed).
       final row = await Supabase.instance.client
           .from('users')
-          .select('id,email,membership_type,membership_status,membership_start_date,membership_end_date')
+          .select(
+              'id,email,membership_type,membership_status,membership_start_date,membership_end_date')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -78,16 +81,21 @@ class _AddExtrasBottomSheetState extends State<AddExtrasBottomSheet> {
 
       if (row != null) {
         final membershipType = (row['membership_type'] ?? '').toString().trim();
-        final membershipStatus = (row['membership_status'] ?? '').toString().trim().toLowerCase();
+        final membershipStatus =
+            (row['membership_status'] ?? '').toString().trim().toLowerCase();
 
         final start = _parseDate(row['membership_start_date']);
         final end = _parseDate(row['membership_end_date']);
 
         final today = _dateOnly(DateTime.now());
-        final startOk = start == null ? false : !_dateOnly(start).isAfter(today);
+        final startOk =
+            start == null ? false : !_dateOnly(start).isAfter(today);
         final endOk = end == null ? true : !_dateOnly(end).isBefore(today);
 
-        eligible = membershipType.isNotEmpty && membershipStatus == 'active' && startOk && endOk;
+        eligible = membershipType.isNotEmpty &&
+            membershipStatus == 'active' &&
+            startOk &&
+            endOk;
       }
 
       if (!mounted) return;
@@ -123,8 +131,11 @@ class _AddExtrasBottomSheetState extends State<AddExtrasBottomSheet> {
     final bool eligible = (!_isLoadingEligibility && _isEligible);
 
     final Color bannerBg = eligible ? nestGreen : const Color(0xFFFFECEC);
-    final IconData bannerIcon = eligible ? Icons.check_circle_outline : Icons.cancel_outlined;
-    final String bannerText = eligible ? 'Included in your membership' : 'Not included in your membership';
+    final IconData bannerIcon =
+        eligible ? Icons.check_circle_outline : Icons.cancel_outlined;
+    final String bannerText = eligible
+        ? 'Included in your membership'
+        : 'Not included in your membership';
 
     final benefits = <String>[
       ...widget.workspaceBenefits,
@@ -295,10 +306,12 @@ class _AddExtrasBottomSheetState extends State<AddExtrasBottomSheet> {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: _isLoadingEligibility
                   ? const SizedBox(
-                height: 50,
-                child: Center(child: CircularProgressIndicator()),
-              )
-                  : (eligible ? _buildActionButtons(context) : _buildDiscoverOptionsButton()),
+                      height: 50,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : (eligible
+                      ? _buildActionButtons(context)
+                      : _buildDiscoverOptionsButton()),
             ),
           ],
         ),
@@ -376,7 +389,8 @@ class _AddExtrasBottomSheetState extends State<AddExtrasBottomSheet> {
               onPressed: () => Navigator.of(context).pop(false),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: nestRed),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25)),
               ),
               child: const Text(
                 'CANCEL',
