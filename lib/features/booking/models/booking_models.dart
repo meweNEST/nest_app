@@ -1,7 +1,5 @@
 // lib/features/booking/models/booking_models.dart
 
-import 'package:flutter/material.dart';
-
 // Dies ist jetzt der ZENTRALE Ort für diese Typen.
 
 class UserBooking {

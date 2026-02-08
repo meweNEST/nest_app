@@ -43,7 +43,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   late CardFormEditController _cardController; // Initialized in initState
 
   // Color constants (keeping these static const as they are compile-time constants)
-  static const Color coral = Color(0xFFFF6B6B);
   static const Color grayText = Color(0xFF9E9E9E);
   static const Color creamBackground = Color(0xFFFDF8F3);
   static const Color darkText = Color(0xFF2D2D2D);
