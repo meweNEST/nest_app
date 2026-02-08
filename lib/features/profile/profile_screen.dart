@@ -45,7 +45,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color _profileActionGreenHover = Color(0xFF9FDAC4);
 
   static const Color _toggleActiveColor = Color(0xFFFFDE59);
-  static final Color _toggleActiveTrackColor = const Color(0xFFFFDE59).withOpacity(0.45);
+  static final Color _toggleActiveTrackColor =
+      const Color(0xFFFFDE59).withOpacity(0.45);
 
   // Support / feedback
   static const String _nestEmail = 'membership@nest-hamburg.de';
@@ -105,22 +106,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ----------------------------
   Future<void> _confirmAndLogout() async {
     final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout?', style: TextStyle(fontFamily: 'SweetAndSalty')),
-        content: const Text('Are you sure you want to log out?', style: TextStyle(fontFamily: 'CharlevoixPro')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Logout?',
+                style: TextStyle(fontFamily: 'SweetAndSalty')),
+            content: const Text('Are you sure you want to log out?',
+                style: TextStyle(fontFamily: 'CharlevoixPro')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Logout',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Logout', style: TextStyle(fontFamily: 'CharlevoixPro')),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!ok) return;
@@ -159,20 +164,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final me = await supabase
           .from('users')
           .select(
-        'id,email,full_name,nickname,gender,phone,language,'
+            'id,email,full_name,nickname,gender,phone,language,'
             'membership_type,membership_status,membership_start_date,membership_end_date,'
             'house_rules_accepted,house_rules_accepted_at,created_at,updated_at',
-      )
+          )
           .eq('id', user.id)
           .maybeSingle();
 
-      final kidsRows = await supabase.from('children').select('*').eq('user_id', user.id).order('created_at');
+      final kidsRows = await supabase
+          .from('children')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at');
 
       final nowUtc = DateTime.now().toUtc().toIso8601String();
 
       final futureRows = await supabase
           .from('bookings')
-          .select('id,workspace_id,start_time,end_time,status,meeting_booking_type,access_pass_purchase_id')
+          .select(
+              'id,workspace_id,start_time,end_time,status,meeting_booking_type,access_pass_purchase_id')
           .eq('user_id', user.id)
           .gt('end_time', nowUtc)
           .order('start_time', ascending: true)
@@ -180,7 +190,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final pastRows = await supabase
           .from('bookings')
-          .select('id,workspace_id,start_time,end_time,status,meeting_booking_type,access_pass_purchase_id')
+          .select(
+              'id,workspace_id,start_time,end_time,status,meeting_booking_type,access_pass_purchase_id')
           .eq('user_id', user.id)
           .lte('end_time', nowUtc)
           .order('start_time', ascending: false)
@@ -206,14 +217,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       Map<String, String> nameMap = {};
       if (workspaceIds.isNotEmpty) {
-        final wsRows = await supabase.from('workspaces').select('id,name').inFilter('id', workspaceIds.toList());
+        final wsRows = await supabase
+            .from('workspaces')
+            .select('id,name')
+            .inFilter('id', workspaceIds.toList());
         final ws = List<Map<String, dynamic>>.from(wsRows as List);
-        nameMap = {for (final w in ws) '${w['id']}': (w['name'] ?? '').toString()};
+        nameMap = {
+          for (final w in ws) '${w['id']}': (w['name'] ?? '').toString()
+        };
       }
 
       if (!mounted) return;
       setState(() {
-        _me = me as Map<String, dynamic>?;
+        _me = me;
         _children = kids;
         _workspaceNameById = nameMap;
 
@@ -242,12 +258,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
-    final fullNameCtrl = TextEditingController(text: (_me?['full_name'] ?? '').toString());
-    final nicknameCtrl = TextEditingController(text: (_me?['nickname'] ?? '').toString());
-    final phoneCtrl = TextEditingController(text: (_me?['phone'] ?? '').toString());
+    final fullNameCtrl =
+        TextEditingController(text: (_me?['full_name'] ?? '').toString());
+    final nicknameCtrl =
+        TextEditingController(text: (_me?['nickname'] ?? '').toString());
+    final phoneCtrl =
+        TextEditingController(text: (_me?['phone'] ?? '').toString());
 
     String? gender = (_me?['gender'] ?? '').toString().trim();
-    if (gender != null && gender.isEmpty) gender = null;
+    if (gender.isEmpty) gender = null;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -278,34 +297,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-
                       _textField(label: 'Full name', controller: fullNameCtrl),
                       const SizedBox(height: 12),
-
-                      _textField(label: 'Nickname (optional)', controller: nicknameCtrl),
+                      _textField(
+                          label: 'Nickname (optional)',
+                          controller: nicknameCtrl),
                       const SizedBox(height: 12),
-
                       DropdownButtonFormField<String?>(
-                        value: gender,
+                        initialValue: gender,
                         isDense: true,
                         decoration: InputDecoration(
                           labelText: 'Gender (optional)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                         ),
                         items: const [
                           DropdownMenuItem(value: null, child: Text('—')),
-                          DropdownMenuItem(value: 'female', child: Text('Female')),
+                          DropdownMenuItem(
+                              value: 'female', child: Text('Female')),
                           DropdownMenuItem(value: 'male', child: Text('Male')),
-                          DropdownMenuItem(value: 'diverse', child: Text('Diverse')),
-                          DropdownMenuItem(value: 'prefer_not_to_say', child: Text('Prefer not to say')),
+                          DropdownMenuItem(
+                              value: 'diverse', child: Text('Diverse')),
+                          DropdownMenuItem(
+                              value: 'prefer_not_to_say',
+                              child: Text('Prefer not to say')),
                         ],
                         onChanged: (v) => setSheetState(() => gender = v),
                       ),
                       const SizedBox(height: 12),
-
-                      _textField(label: 'Phone (optional)', controller: phoneCtrl, keyboardType: TextInputType.phone),
-
+                      _textField(
+                          label: 'Phone (optional)',
+                          controller: phoneCtrl,
+                          keyboardType: TextInputType.phone),
                       const SizedBox(height: 18),
                       Row(
                         children: [
@@ -349,12 +374,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   await _loadAll();
 
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Profile saved.'), backgroundColor: Colors.green),
+                                    const SnackBar(
+                                        content: Text('Profile saved.'),
+                                        backgroundColor: Colors.green),
                                   );
                                 } catch (e) {
                                   if (!mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Could not save: $e'), backgroundColor: Colors.red),
+                                    SnackBar(
+                                        content: Text('Could not save: $e'),
+                                        backgroundColor: Colors.red),
                                   );
                                 }
                               },
@@ -407,7 +436,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Text(
                     'Change password',
-                    style: TextStyle(fontFamily: 'SweetAndSalty', fontSize: 26, color: AppTheme.darkText),
+                    style: TextStyle(
+                        fontFamily: 'SweetAndSalty',
+                        fontSize: 26,
+                        color: AppTheme.darkText),
                   ),
                   const SizedBox(height: 14),
                   TextField(
@@ -415,7 +447,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'New password',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -424,7 +457,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Confirm new password',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -438,7 +472,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             padding: EdgeInsets.symmetric(vertical: 12),
                             child: Text(
                               'Cancel',
-                              style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800),
+                              style: TextStyle(
+                                  fontFamily: 'CharlevoixPro',
+                                  fontWeight: FontWeight.w800),
                             ),
                           ),
                         ),
@@ -457,7 +493,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             if (p1.length < 8) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Password must be at least 8 characters.'),
+                                  content: Text(
+                                      'Password must be at least 8 characters.'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -465,22 +502,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             }
                             if (p1 != p2) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Passwords do not match.'), backgroundColor: Colors.red),
+                                const SnackBar(
+                                    content: Text('Passwords do not match.'),
+                                    backgroundColor: Colors.red),
                               );
                               return;
                             }
 
                             try {
-                              await supabase.auth.updateUser(UserAttributes(password: p1));
+                              await supabase.auth
+                                  .updateUser(UserAttributes(password: p1));
                               if (!mounted) return;
                               Navigator.of(sheetCtx).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Password updated.'), backgroundColor: Colors.green),
+                                const SnackBar(
+                                    content: Text('Password updated.'),
+                                    backgroundColor: Colors.green),
                               );
                             } catch (e) {
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Could not update password: $e'), backgroundColor: Colors.red),
+                                SnackBar(
+                                    content:
+                                        Text('Could not update password: $e'),
+                                    backgroundColor: Colors.red),
                               );
                             }
                           },
@@ -537,7 +582,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     textColor: AppTheme.darkText,
                     onPressed: () {
                       Navigator.of(sheetCtx).pop();
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MembershipScreen()));
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const MembershipScreen()));
                     },
                   ),
                 ),
@@ -564,13 +610,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       await _cancelMembership();
                     },
                     style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50)),
                       side: BorderSide(color: Colors.red.withOpacity(0.35)),
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 24),
                     ),
                     child: const Text(
                       'Cancel membership',
-                      style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600, color: Colors.red),
+                      style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red),
                     ),
                   ),
                 ),
@@ -604,8 +655,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _openPaymentMethods() async {
     // Requires backend (Stripe customer portal). We try an RPC and fall back to email.
     try {
-      final res = await supabase.rpc('create_billing_portal_session', params: {});
-      final url = (res is Map && res['url'] != null) ? res['url'].toString() : res?.toString();
+      final res =
+          await supabase.rpc('create_billing_portal_session', params: {});
+      final url = (res is Map && res['url'] != null)
+          ? res['url'].toString()
+          : res?.toString();
 
       if (url != null && url.startsWith('http')) {
         await _launchUri(Uri.parse(url));
@@ -630,22 +684,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _cancelMembership() async {
     final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel membership?', style: TextStyle(fontFamily: 'SweetAndSalty')),
-        content: const Text('Do you want to request cancellation?', style: TextStyle(fontFamily: 'CharlevoixPro')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Cancel membership?',
+                style: TextStyle(fontFamily: 'SweetAndSalty')),
+            content: const Text('Do you want to request cancellation?',
+                style: TextStyle(fontFamily: 'CharlevoixPro')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Keep',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Cancel',
+                    style: TextStyle(
+                        fontFamily: 'CharlevoixPro', color: Colors.red)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro', color: Colors.red)),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!ok) return;
@@ -654,7 +713,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await supabase.rpc('cancel_membership', params: {});
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cancellation requested.'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('Cancellation requested.'),
+            backgroundColor: Colors.green),
       );
       await _loadAll();
     } catch (_) {
@@ -695,7 +756,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not update language: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('Could not update language: $e'),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -722,44 +785,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : '${loc.formatTimeOfDay(TimeOfDay.fromDateTime(startLocal))} – ${loc.formatTimeOfDay(TimeOfDay.fromDateTime(endLocal))}';
 
     final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel booking?', style: TextStyle(fontFamily: 'SweetAndSalty')),
-        content: Text(
-          (date.isEmpty && time.isEmpty)
-              ? 'Are you sure you want to cancel this booking?'
-              : 'Cancel your booking on\n$date\n$time ?',
-          style: const TextStyle(fontFamily: 'CharlevoixPro'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Cancel booking?',
+                style: TextStyle(fontFamily: 'SweetAndSalty')),
+            content: Text(
+              (date.isEmpty && time.isEmpty)
+                  ? 'Are you sure you want to cancel this booking?'
+                  : 'Cancel your booking on\n$date\n$time ?',
+              style: const TextStyle(fontFamily: 'CharlevoixPro'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Keep',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Cancel booking',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Cancel booking', style: TextStyle(fontFamily: 'CharlevoixPro')),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!ok) return;
 
     try {
-      await supabase.from('bookings').update({'status': 'CANCELLED'}).eq('id', id);
+      await supabase
+          .from('bookings')
+          .update({'status': 'CANCELLED'}).eq('id', id);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking cancelled.'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('Booking cancelled.'), backgroundColor: Colors.green),
       );
 
       await _loadAll();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not cancel booking: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('Could not cancel booking: $e'),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -773,21 +844,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (sheetCtx) {
-        final upcoming = _futureBookings.where((b) => _isConfirmed(b['status'])).toList();
-        final past = _pastBookings.where((b) => _isConfirmed(b['status'])).toList();
+        final upcoming =
+            _futureBookings.where((b) => _isConfirmed(b['status'])).toList();
+        final past =
+            _pastBookings.where((b) => _isConfirmed(b['status'])).toList();
 
         Widget sectionTitle(String t) => Padding(
-          padding: const EdgeInsets.only(top: 14, bottom: 8),
-          child: Text(
-            t,
-            style: const TextStyle(
-              fontFamily: 'CharlevoixPro',
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.darkText,
-            ),
-          ),
-        );
+              padding: const EdgeInsets.only(top: 14, bottom: 8),
+              child: Text(
+                t,
+                style: const TextStyle(
+                  fontFamily: 'CharlevoixPro',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.darkText,
+                ),
+              ),
+            );
 
         return SafeArea(
           top: false,
@@ -817,7 +890,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: EdgeInsets.only(top: 6),
                           child: Text(
                             'No past bookings yet.',
-                            style: TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
+                            style: TextStyle(
+                                fontFamily: 'CharlevoixPro',
+                                color: AppTheme.secondaryText),
                           ),
                         )
                       else
@@ -864,7 +939,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final wid = _asInt(b['workspace_id']);
     final workspaceName = _workspaceNameById['$wid'];
-    final label = (workspaceName != null && workspaceName.trim().isNotEmpty) ? workspaceName : 'Workspace #$wid';
+    final label = (workspaceName != null && workspaceName.trim().isNotEmpty)
+        ? workspaceName
+        : 'Workspace #$wid';
 
     final isFuture = endLocal != null && endLocal.isAfter(DateTime.now());
 
@@ -875,9 +952,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(
-                label!,
+                label,
                 style: const TextStyle(
                   fontFamily: 'CharlevoixPro',
                   fontWeight: FontWeight.w800,
@@ -887,7 +965,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 4),
               Text(
                 '$date${time.isEmpty ? '' : ' • $time'}',
-                style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
+                style: const TextStyle(
+                    fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
               ),
             ]),
           ),
@@ -895,10 +974,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             OutlinedButton(
               onPressed: () => _cancelBooking(b),
               style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
                 side: BorderSide(color: Colors.red.withOpacity(0.35)),
               ),
-              child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro', color: Colors.red)),
+              child: const Text('Cancel',
+                  style: TextStyle(
+                      fontFamily: 'CharlevoixPro', color: Colors.red)),
             ),
         ],
       ),
@@ -914,11 +996,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final isEdit = child != null;
 
-    final nameCtrl = TextEditingController(text: (child?['name'] ?? '').toString());
-    final allergiesCtrl = TextEditingController(text: (child?['allergies'] ?? '').toString());
-    final specialNeedsCtrl = TextEditingController(text: (child?['special_needs'] ?? '').toString());
-    final emergencyNameCtrl = TextEditingController(text: (child?['emergency_contact_name'] ?? '').toString());
-    final emergencyPhoneCtrl = TextEditingController(text: (child?['emergency_contact_phone'] ?? '').toString());
+    final nameCtrl =
+        TextEditingController(text: (child?['name'] ?? '').toString());
+    final allergiesCtrl =
+        TextEditingController(text: (child?['allergies'] ?? '').toString());
+    final specialNeedsCtrl =
+        TextEditingController(text: (child?['special_needs'] ?? '').toString());
+    final emergencyNameCtrl = TextEditingController(
+        text: (child?['emergency_contact_name'] ?? '').toString());
+    final emergencyPhoneCtrl = TextEditingController(
+        text: (child?['emergency_contact_phone'] ?? '').toString());
 
     String? ageGroup = (child?['age_group'] ?? '').toString().trim();
     if (ageGroup.isEmpty) ageGroup = null;
@@ -931,7 +1018,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } catch (_) {}
     }
 
-    Future<void> pickDob(StateSetter setModalState, BuildContext sheetCtx) async {
+    Future<void> pickDob(
+        StateSetter setModalState, BuildContext sheetCtx) async {
       final initial = dob ?? DateTime(DateTime.now().year - 3, 1, 1);
       final picked = await showDatePicker(
         context: sheetCtx,
@@ -978,10 +1066,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-
                       _textField(label: 'Name', controller: nameCtrl),
                       const SizedBox(height: 12),
-
                       Row(
                         children: [
                           Expanded(
@@ -994,16 +1080,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-
                       _ageGroupDropdown(
                         value: ageGroup,
                         onChanged: (v) => setModalState(() => ageGroup = v),
                       ),
                       const SizedBox(height: 12),
-
-                      _textField(label: 'Allergies (optional)', controller: allergiesCtrl, hint: 'e.g. milk, nuts'),
+                      _textField(
+                          label: 'Allergies (optional)',
+                          controller: allergiesCtrl,
+                          hint: 'e.g. milk, nuts'),
                       const SizedBox(height: 12),
-
                       _textField(
                         label: 'Special needs (optional)',
                         controller: specialNeedsCtrl,
@@ -1011,16 +1097,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         maxLines: 3,
                       ),
                       const SizedBox(height: 12),
-
-                      _textField(label: 'Emergency contact name (optional)', controller: emergencyNameCtrl),
+                      _textField(
+                          label: 'Emergency contact name (optional)',
+                          controller: emergencyNameCtrl),
                       const SizedBox(height: 12),
-
                       _textField(
                         label: 'Emergency contact phone (optional)',
                         controller: emergencyPhoneCtrl,
                         keyboardType: TextInputType.phone,
                       ),
-
                       const SizedBox(height: 18),
                       Row(
                         children: [
@@ -1051,8 +1136,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               onPressed: () async {
                                 final name = nameCtrl.text.trim();
                                 if (name.isEmpty) {
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    const SnackBar(content: Text('Please enter a name.'), backgroundColor: Colors.red),
+                                  ScaffoldMessenger.of(this.context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Please enter a name.'),
+                                        backgroundColor: Colors.red),
                                   );
                                   return;
                                 }
@@ -1061,36 +1149,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   'user_id': user.id,
                                   'name': name,
                                   'age_group': ageGroup, // 'small'/'big'/null
-                                  'allergies': allergiesCtrl.text.trim().isEmpty ? null : allergiesCtrl.text.trim(),
-                                  'special_needs': specialNeedsCtrl.text.trim().isEmpty ? null : specialNeedsCtrl.text.trim(),
+                                  'allergies': allergiesCtrl.text.trim().isEmpty
+                                      ? null
+                                      : allergiesCtrl.text.trim(),
+                                  'special_needs':
+                                      specialNeedsCtrl.text.trim().isEmpty
+                                          ? null
+                                          : specialNeedsCtrl.text.trim(),
                                   'emergency_contact_name':
-                                  emergencyNameCtrl.text.trim().isEmpty ? null : emergencyNameCtrl.text.trim(),
+                                      emergencyNameCtrl.text.trim().isEmpty
+                                          ? null
+                                          : emergencyNameCtrl.text.trim(),
                                   'emergency_contact_phone':
-                                  emergencyPhoneCtrl.text.trim().isEmpty ? null : emergencyPhoneCtrl.text.trim(),
-                                  'date_of_birth': dob == null ? null : _dateOnlyIso(dob!),
+                                      emergencyPhoneCtrl.text.trim().isEmpty
+                                          ? null
+                                          : emergencyPhoneCtrl.text.trim(),
+                                  'date_of_birth':
+                                      dob == null ? null : _dateOnlyIso(dob!),
                                 };
 
                                 try {
                                   if (isEdit) {
-                                    await supabase.from('children').update(payload).eq('id', child!['id']);
+                                    await supabase
+                                        .from('children')
+                                        .update(payload)
+                                        .eq('id', child['id']);
                                   } else {
-                                    await supabase.from('children').insert(payload);
+                                    await supabase
+                                        .from('children')
+                                        .insert(payload);
                                   }
 
                                   if (!mounted) return;
                                   Navigator.of(sheetCtx).pop();
                                   await _loadAll();
 
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                  ScaffoldMessenger.of(this.context)
+                                      .showSnackBar(
                                     SnackBar(
-                                      content: Text(isEdit ? 'Child saved: $name' : 'Child added: $name'),
+                                      content: Text(isEdit
+                                          ? 'Child saved: $name'
+                                          : 'Child added: $name'),
                                       backgroundColor: Colors.green,
                                     ),
                                   );
                                 } catch (e) {
                                   if (!mounted) return;
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(content: Text('Could not save: $e'), backgroundColor: Colors.red),
+                                  ScaffoldMessenger.of(this.context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                        content: Text('Could not save: $e'),
+                                        backgroundColor: Colors.red),
                                   );
                                 }
                               },
@@ -1098,51 +1207,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ],
                       ),
-
                       if (isEdit) ...[
                         const SizedBox(height: 12),
                         Center(
                           child: TextButton(
                             onPressed: () async {
                               final confirmed = await showDialog<bool>(
-                                context: sheetCtx,
-                                builder: (dCtx) => AlertDialog(
-                                  title: const Text('Delete child?', style: TextStyle(fontFamily: 'SweetAndSalty')),
-                                  content: const Text('This cannot be undone.', style: TextStyle(fontFamily: 'CharlevoixPro')),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(dCtx).pop(false),
-                                      child: const Text('Keep', style: TextStyle(fontFamily: 'CharlevoixPro')),
+                                    context: sheetCtx,
+                                    builder: (dCtx) => AlertDialog(
+                                      title: const Text('Delete child?',
+                                          style: TextStyle(
+                                              fontFamily: 'SweetAndSalty')),
+                                      content: const Text(
+                                          'This cannot be undone.',
+                                          style: TextStyle(
+                                              fontFamily: 'CharlevoixPro')),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(dCtx).pop(false),
+                                          child: const Text('Keep',
+                                              style: TextStyle(
+                                                  fontFamily: 'CharlevoixPro')),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(dCtx).pop(true),
+                                          child: const Text('Delete',
+                                              style: TextStyle(
+                                                  fontFamily: 'CharlevoixPro')),
+                                        ),
+                                      ],
                                     ),
-                                    TextButton(
-                                      onPressed: () => Navigator.of(dCtx).pop(true),
-                                      child: const Text('Delete', style: TextStyle(fontFamily: 'CharlevoixPro')),
-                                    ),
-                                  ],
-                                ),
-                              ) ??
+                                  ) ??
                                   false;
 
                               if (!confirmed) return;
 
                               try {
-                                await supabase.from('children').delete().eq('id', child!['id']);
+                                await supabase
+                                    .from('children')
+                                    .delete()
+                                    .eq('id', child['id']);
 
                                 if (!mounted) return;
-                                Navigator.of(sheetCtx).pop(); // close the sheet only
+                                Navigator.of(sheetCtx)
+                                    .pop(); // close the sheet only
                                 await _loadAll();
 
                                 ScaffoldMessenger.of(this.context).showSnackBar(
-                                  const SnackBar(content: Text('Child deleted.'), backgroundColor: Colors.green),
+                                  const SnackBar(
+                                      content: Text('Child deleted.'),
+                                      backgroundColor: Colors.green),
                                 );
                               } catch (e) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(this.context).showSnackBar(
-                                  SnackBar(content: Text('Could not delete: $e'), backgroundColor: Colors.red),
+                                  SnackBar(
+                                      content: Text('Could not delete: $e'),
+                                      backgroundColor: Colors.red),
                                 );
                               }
                             },
-                            child: const Text('Delete child', style: TextStyle(color: Colors.red)),
+                            child: const Text('Delete child',
+                                style: TextStyle(color: Colors.red)),
                           ),
                         ),
                       ],
@@ -1164,16 +1292,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Smaller dropdown (not oversized)
-  Widget _ageGroupDropdown({required String? value, required ValueChanged<String?> onChanged}) {
+  Widget _ageGroupDropdown(
+      {required String? value, required ValueChanged<String?> onChanged}) {
     return DropdownButtonFormField<String?>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       isDense: true,
       decoration: InputDecoration(
         labelText: 'Age group (optional)',
         labelStyle: const TextStyle(fontFamily: 'CharlevoixPro'),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
       items: [
         const DropdownMenuItem<String?>(
@@ -1181,9 +1311,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Text('—', style: TextStyle(fontFamily: 'CharlevoixPro')),
         ),
         ..._ageGroups.map(
-              (g) => DropdownMenuItem<String?>(
+          (g) => DropdownMenuItem<String?>(
             value: g.value,
-            child: Text(g.label, style: const TextStyle(fontFamily: 'CharlevoixPro')),
+            child: Text(g.label,
+                style: const TextStyle(fontFamily: 'CharlevoixPro')),
           ),
         ),
       ],
@@ -1195,15 +1326,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Support helpers
   // ----------------------------
   Uri _mailtoUri(String email, {String? subject, String? body}) => Uri(
-    scheme: 'mailto',
-    path: email,
-    queryParameters: {
-      if (subject != null) 'subject': subject,
-      if (body != null) 'body': body,
-    },
-  );
+        scheme: 'mailto',
+        path: email,
+        queryParameters: {
+          if (subject != null) 'subject': subject,
+          if (body != null) 'body': body,
+        },
+      );
 
-  Uri _telUri(String phone) => Uri(scheme: 'tel', path: phone.replaceAll(' ', ''));
+  Uri _telUri(String phone) =>
+      Uri(scheme: 'tel', path: phone.replaceAll(' ', ''));
 
   Future<void> _launchUri(Uri uri) async {
     try {
@@ -1211,7 +1343,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!ok) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link.'), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text('Could not open link.'),
+              backgroundColor: Colors.red),
         );
         return;
       }
@@ -1219,7 +1353,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open link.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Could not open link.'), backgroundColor: Colors.red),
       );
     }
   }
@@ -1246,65 +1381,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.sageGreen))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.sageGreen))
             : RefreshIndicator(
-          onRefresh: _loadAll,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const SizedBox(height: 6),
-                const Center(
-                  child: Text(
-                    'Your Profile',
-                    style: TextStyle(
-                      fontFamily: 'SweetAndSalty',
-                      fontSize: 28,
-                      color: AppTheme.darkText,
-                    ),
+                onRefresh: _loadAll,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 6),
+                      const Center(
+                        child: Text(
+                          'Your Profile',
+                          style: TextStyle(
+                            fontFamily: 'SweetAndSalty',
+                            fontSize: 28,
+                            color: AppTheme.darkText,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      if (_error != null) ...[
+                        _infoBanner(_error!,
+                            background: Colors.red.shade50,
+                            border: Colors.red.shade200),
+                        const SizedBox(height: 12),
+                      ],
+                      if (isGuest)
+                        _card(
+                          title: 'Guest mode',
+                          subtitle:
+                              'Log in to manage bookings, children profiles and preferences.',
+                          leading: const Icon(Icons.person_outline,
+                              color: AppTheme.darkText),
+                          child: const SizedBox.shrink(),
+                        )
+                      else ...[
+                        _buildHeaderProfileAndMembershipCard(),
+                        const SizedBox(height: 12),
+                        _buildUpcomingBookingCard(),
+                        const SizedBox(height: 12),
+                        _buildChildrenCard(),
+                        const SizedBox(height: 12),
+                        _buildPreferencesAndAllergiesCard(),
+                        const SizedBox(height: 12),
+                        _buildSettingsCard(),
+                        const SizedBox(height: 12),
+                        _buildSupportAndFeedbackCard(),
+                      ],
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 18),
-
-                if (_error != null) ...[
-                  _infoBanner(_error!, background: Colors.red.shade50, border: Colors.red.shade200),
-                  const SizedBox(height: 12),
-                ],
-
-                if (isGuest)
-                  _card(
-                    title: 'Guest mode',
-                    subtitle: 'Log in to manage bookings, children profiles and preferences.',
-                    leading: const Icon(Icons.person_outline, color: AppTheme.darkText),
-                    child: const SizedBox.shrink(),
-                  )
-                else ...[
-                  _buildHeaderProfileAndMembershipCard(),
-                  const SizedBox(height: 12),
-                  _buildUpcomingBookingCard(),
-                  const SizedBox(height: 12),
-                  _buildChildrenCard(),
-                  const SizedBox(height: 12),
-                  _buildPreferencesAndAllergiesCard(),
-                  const SizedBox(height: 12),
-                  _buildSettingsCard(),
-                  const SizedBox(height: 12),
-                  _buildSupportAndFeedbackCard(),
-                ],
-
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
 
   Widget _buildHeaderProfileAndMembershipCard() {
     final name = _displayNameFromMe(_me);
-    final email = (_me?['email'] ?? supabase.auth.currentUser?.email ?? '').toString();
+    final email =
+        (_me?['email'] ?? supabase.auth.currentUser?.email ?? '').toString();
     final phone = (_me?['phone'] ?? '').toString().trim();
     final nickname = (_me?['nickname'] ?? '').toString().trim();
     final genderRaw = (_me?['gender'] ?? '').toString().trim();
@@ -1314,7 +1452,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final type = _prettyMembershipType(typeRaw);
     final status = _prettyStatus(statusRaw);
-    final membershipLine = type.isEmpty ? 'No membership' : '$type • ${status.isEmpty ? '—' : status}';
+    final membershipLine = type.isEmpty
+        ? 'No membership'
+        : '$type • ${status.isEmpty ? '—' : status}';
 
     return _card(
       title: name.isEmpty ? 'Your account' : name,
@@ -1326,10 +1466,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (nickname.isNotEmpty) _kvRow('Nickname', nickname),
           if (genderRaw.isNotEmpty) _kvRow('Gender', _prettyGender(genderRaw)),
           if (phone.isNotEmpty) _kvRow('Phone', phone),
-
           const SizedBox(height: 6),
           _kvRow('Membership', membershipLine),
-
           const SizedBox(height: 14),
           Row(
             children: [
@@ -1364,7 +1502,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return _card(
         title: 'Upcoming booking',
         subtitle: 'No upcoming bookings.',
-        leading: const Icon(Icons.calendar_today_outlined, color: AppTheme.darkText),
+        leading:
+            const Icon(Icons.calendar_today_outlined, color: AppTheme.darkText),
         child: SizedBox(
           width: 240,
           child: NestPrimaryButton(
@@ -1389,12 +1528,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final wid = _asInt(b['workspace_id']);
     final workspaceName = _workspaceNameById['$wid'];
-    final label = (workspaceName != null && workspaceName.trim().isNotEmpty) ? workspaceName : 'Workspace #$wid';
+    final label = (workspaceName != null && workspaceName.trim().isNotEmpty)
+        ? workspaceName
+        : 'Workspace #$wid';
 
     return _card(
       title: 'Upcoming booking',
-      subtitle: label!,
-      leading: const Icon(Icons.event_available_outlined, color: AppTheme.darkText),
+      subtitle: label,
+      leading:
+          const Icon(Icons.event_available_outlined, color: AppTheme.darkText),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1407,13 +1549,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: OutlinedButton(
                   onPressed: () => _cancelBooking(b),
                   style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50)),
                     side: BorderSide(color: Colors.red.withOpacity(0.35)),
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 24),
                   ),
                   child: const Text(
                     'Cancel booking',
-                    style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600, color: Colors.red),
+                    style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red),
                   ),
                 ),
               ),
@@ -1437,22 +1584,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildChildrenCard() {
     final count = _children.length;
     final allAllergies = _allAllergiesFromChildren(_children);
-    final allergySummary = allAllergies.isEmpty ? 'No allergies saved.' : 'Allergies: ${allAllergies.join(', ')}';
+    final allergySummary = allAllergies.isEmpty
+        ? 'No allergies saved.'
+        : 'Allergies: ${allAllergies.join(', ')}';
 
     return _card(
       title: 'Children',
-      subtitle: count == 0 ? 'No child profiles yet.' : '$count child${count == 1 ? '' : 'ren'}',
+      subtitle: count == 0
+          ? 'No child profiles yet.'
+          : '$count child${count == 1 ? '' : 'ren'}',
       leading: const Icon(Icons.child_care_outlined, color: AppTheme.darkText),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(allergySummary, style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText)),
+          Text(allergySummary,
+              style: const TextStyle(
+                  fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText)),
           const SizedBox(height: 12),
           if (_children.isNotEmpty)
             ..._children.map((c) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _childTile(c),
-            )),
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _childTile(c),
+                )),
           const SizedBox(height: 4),
           Center(
             child: SizedBox(
@@ -1498,7 +1651,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _avatarCircle(initials: _initials(name)),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(
                 name,
                 style: const TextStyle(
@@ -1509,14 +1663,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (meta.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                Text(meta, style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText)),
+                Text(meta,
+                    style: const TextStyle(
+                        fontFamily: 'CharlevoixPro',
+                        color: AppTheme.secondaryText)),
               ],
             ]),
           ),
           IconButton(
             tooltip: 'Edit child',
             onPressed: () => _showChildEditorSheet(child: c),
-            icon: const Icon(Icons.edit_outlined, color: AppTheme.secondaryText),
+            icon:
+                const Icon(Icons.edit_outlined, color: AppTheme.secondaryText),
           ),
         ],
       ),
@@ -1553,7 +1711,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _allAllergiesFromChildren(_children).isEmpty
                 ? 'No allergies saved in child profiles.'
                 : _allAllergiesFromChildren(_children).join(' • '),
-            style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
+            style: const TextStyle(
+                fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
           ),
         ],
       ),
@@ -1585,13 +1744,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
             title: const Text('Notifications',
-                style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w700)),
-            subtitle: const Text('Booking reminders and updates', style: TextStyle(fontFamily: 'CharlevoixPro')),
-            activeColor: _toggleActiveColor,
+                style: TextStyle(
+                    fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w700)),
+            subtitle: const Text('Booking reminders and updates',
+                style: TextStyle(fontFamily: 'CharlevoixPro')),
+            activeThumbColor: _toggleActiveColor,
             activeTrackColor: _toggleActiveTrackColor,
             contentPadding: EdgeInsets.zero,
           ),
-
           SwitchListTile(
             value: houseRulesAccepted,
             onChanged: (v) async {
@@ -1603,48 +1763,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _me = {
                   ...?_me,
                   'house_rules_accepted': v,
-                  'house_rules_accepted_at': v ? DateTime.now().toUtc().toIso8601String() : null,
+                  'house_rules_accepted_at':
+                      v ? DateTime.now().toUtc().toIso8601String() : null,
                 };
               });
 
               try {
                 await supabase.from('users').update({
                   'house_rules_accepted': v,
-                  'house_rules_accepted_at': v ? DateTime.now().toUtc().toIso8601String() : null,
+                  'house_rules_accepted_at':
+                      v ? DateTime.now().toUtc().toIso8601String() : null,
                 }).eq('id', user.id);
 
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('House rules: ${v ? 'ACCEPTED' : 'NOT accepted'}'),
+                    content:
+                        Text('House rules: ${v ? 'ACCEPTED' : 'NOT accepted'}'),
                     backgroundColor: Colors.green,
                   ),
                 );
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Could not update: $e'), backgroundColor: Colors.red),
+                  SnackBar(
+                      content: Text('Could not update: $e'),
+                      backgroundColor: Colors.red),
                 );
                 await _loadAll(); // revert
               }
             },
             title: const Text('House rules accepted',
-                style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w700)),
-            subtitle: const Text('Toggle if you agree to the house rules', style: TextStyle(fontFamily: 'CharlevoixPro')),
-            activeColor: _toggleActiveColor,
+                style: TextStyle(
+                    fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w700)),
+            subtitle: const Text('Toggle if you agree to the house rules',
+                style: TextStyle(fontFamily: 'CharlevoixPro')),
+            activeThumbColor: _toggleActiveColor,
             activeTrackColor: _toggleActiveTrackColor,
             contentPadding: EdgeInsets.zero,
           ),
-
           const Divider(height: 22),
-
           const Text(
             'Language',
-            style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800, color: AppTheme.darkText),
+            style: TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontWeight: FontWeight.w800,
+                color: AppTheme.darkText),
           ),
           const SizedBox(height: 10),
           _languageToggleButtons(),
-
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -1656,14 +1823,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: _showChangePasswordSheet,
             ),
           ),
-
           const SizedBox(height: 18),
           const Text(
             'Communication preferences',
-            style: TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800, color: AppTheme.darkText),
+            style: TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontWeight: FontWeight.w800,
+                color: AppTheme.darkText),
           ),
           const SizedBox(height: 8),
-
           _commToggle(
             title: 'Marketing notifications',
             value: _commMarketing,
@@ -1672,7 +1840,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               await _setBoolPref(_prefsKeyCommMarketing, v);
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Marketing notifications: ${v ? 'ON' : 'OFF'}'), backgroundColor: Colors.green),
+                SnackBar(
+                    content:
+                        Text('Marketing notifications: ${v ? 'ON' : 'OFF'}'),
+                    backgroundColor: Colors.green),
               );
             },
           ),
@@ -1684,7 +1855,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               await _setBoolPref(_prefsKeyCommEmail, v);
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Emails: ${v ? 'ON' : 'OFF'}'), backgroundColor: Colors.green),
+                SnackBar(
+                    content: Text('Emails: ${v ? 'ON' : 'OFF'}'),
+                    backgroundColor: Colors.green),
               );
             },
           ),
@@ -1696,7 +1869,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               await _setBoolPref(_prefsKeyCommPhone, v);
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Phone calls: ${v ? 'ON' : 'OFF'}'), backgroundColor: Colors.green),
+                SnackBar(
+                    content: Text('Phone calls: ${v ? 'ON' : 'OFF'}'),
+                    backgroundColor: Colors.green),
               );
             },
           ),
@@ -1708,7 +1883,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               await _setBoolPref(_prefsKeyCommTracking, v);
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Tracking: ${v ? 'ON' : 'OFF'}'), backgroundColor: Colors.green),
+                SnackBar(
+                    content: Text('Tracking: ${v ? 'ON' : 'OFF'}'),
+                    backgroundColor: Colors.green),
               );
             },
           ),
@@ -1727,7 +1904,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: NestPrimaryButton(
             text: 'Deutsch',
             backgroundColor: selectedDe ? _profileActionGreen : Colors.white,
-            hoverColor: selectedDe ? _profileActionGreenHover : const Color(0xFFF3F3F3),
+            hoverColor:
+                selectedDe ? _profileActionGreenHover : const Color(0xFFF3F3F3),
             textColor: AppTheme.darkText,
             onPressed: () => _setLanguage('de'),
           ),
@@ -1737,7 +1915,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: NestPrimaryButton(
             text: 'English',
             backgroundColor: selectedEn ? _profileActionGreen : Colors.white,
-            hoverColor: selectedEn ? _profileActionGreenHover : const Color(0xFFF3F3F3),
+            hoverColor:
+                selectedEn ? _profileActionGreenHover : const Color(0xFFF3F3F3),
             textColor: AppTheme.darkText,
             onPressed: () => _setLanguage('en'),
           ),
@@ -1750,7 +1929,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return _card(
       title: 'Support & contact',
       subtitle: 'We’re here to help',
-      leading: const Icon(Icons.support_agent_outlined, color: AppTheme.darkText),
+      leading:
+          const Icon(Icons.support_agent_outlined, color: AppTheme.darkText),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1758,7 +1938,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
           _supportRow(Icons.phone, _nestPhone),
           const SizedBox(height: 14),
-
           Row(
             children: [
               Expanded(
@@ -1767,7 +1946,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: _profileActionGreen,
                   hoverColor: _profileActionGreenHover,
                   textColor: AppTheme.darkText,
-                  onPressed: () => _launchUri(_mailtoUri(_nestEmail, subject: 'Support request')),
+                  onPressed: () => _launchUri(
+                      _mailtoUri(_nestEmail, subject: 'Support request')),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1782,7 +1962,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
           InkWell(
             onTap: () => _launchUri(
@@ -1813,24 +1992,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ----------------------------
   // UI helpers
   // ----------------------------
-  Widget _commToggle({required String title, required bool value, required ValueChanged<bool> onChanged}) {
+  Widget _commToggle(
+      {required String title,
+      required bool value,
+      required ValueChanged<bool> onChanged}) {
     return SwitchListTile(
       value: value,
       onChanged: onChanged,
-      title: Text(title, style: const TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w700)),
+      title: Text(title,
+          style: const TextStyle(
+              fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w700)),
       contentPadding: EdgeInsets.zero,
-      activeColor: _toggleActiveColor,
+      activeThumbColor: _toggleActiveColor,
       activeTrackColor: _toggleActiveTrackColor,
     );
   }
 
   ButtonStyle _outlinedPillStyle() => OutlinedButton.styleFrom(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-    side: BorderSide(color: Colors.black.withOpacity(0.18)),
-    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-  );
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+        side: BorderSide(color: Colors.black.withOpacity(0.18)),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+      );
 
-  Widget _pillAction({required String label, required VoidCallback onPressed, required IconData icon}) {
+  Widget _pillAction(
+      {required String label,
+      required VoidCallback onPressed,
+      required IconData icon}) {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: AppTheme.secondaryText),
@@ -1870,7 +2057,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.bookingButtonColor.withOpacity(0.9), width: 2),
+          borderSide: BorderSide(
+              color: AppTheme.bookingButtonColor.withOpacity(0.9), width: 2),
         ),
       ),
       style: const TextStyle(fontFamily: 'CharlevoixPro'),
@@ -1882,12 +2070,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Icon(icon, size: 18, color: AppTheme.darkText),
         const SizedBox(width: 10),
-        Expanded(child: Text(text, style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.darkText))),
+        Expanded(
+            child: Text(text,
+                style: const TextStyle(
+                    fontFamily: 'CharlevoixPro', color: AppTheme.darkText))),
       ],
     );
   }
 
-  Widget _infoBanner(String text, {required Color background, required Color border}) {
+  Widget _infoBanner(String text,
+      {required Color background, required Color border}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -1896,7 +2088,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
       ),
-      child: Text(text, style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.darkText)),
+      child: Text(text,
+          style: const TextStyle(
+              fontFamily: 'CharlevoixPro', color: AppTheme.darkText)),
     );
   }
 
@@ -1918,27 +2112,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading,
               const SizedBox(width: 12),
               Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontFamily: 'CharlevoixPro',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.darkText,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'CharlevoixPro',
-                      fontSize: 13,
-                      color: AppTheme.secondaryText,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ]),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontFamily: 'CharlevoixPro',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.darkText,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontFamily: 'CharlevoixPro',
+                          fontSize: 13,
+                          color: AppTheme.secondaryText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ]),
               ),
             ],
           ),
@@ -1950,17 +2146,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   BoxDecoration _cardDecoration() => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: Colors.black.withOpacity(0.08)),
-    boxShadow: [
-      BoxShadow(
-        blurRadius: 10,
-        offset: const Offset(0, 4),
-        color: Colors.black.withOpacity(0.06),
-      )
-    ],
-  );
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.06),
+          )
+        ],
+      );
 
   Widget _avatarCircle({required String initials}) {
     return Container(
@@ -1992,7 +2188,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: Text(
               k,
-              style: const TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
+              style: const TextStyle(
+                  fontFamily: 'CharlevoixPro', color: AppTheme.secondaryText),
             ),
           ),
           Text(
@@ -2087,14 +2284,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _prettyGender(String raw) {
     final v = raw.trim().toLowerCase();
     switch (v) {
-    case 'female':
-    return 'Female';
-    case 'male':
-    return 'Male';
-    case 'diverse':
-    return 'Diverse';
-    case 'prefer_not_to_say':
-    return 'Prefer not to say';
+      case 'female':
+        return 'Female';
+      case 'male':
+        return 'Male';
+      case 'diverse':
+        return 'Diverse';
       case 'prefer_not_to_say':
         return 'Prefer not to say';
       default:
@@ -2107,7 +2302,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _initials(String s) {
     final trimmed = s.trim();
     if (trimmed.isEmpty) return 'N';
-    final parts = trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts =
+        trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
   }
@@ -2115,10 +2311,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<String> _stringListFromAny(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) {
-      return raw.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
+      return raw
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
     if (raw is String) {
-      return raw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      return raw
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
     return [];
   }
@@ -2130,7 +2333,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         set.add(a);
       }
     }
-    final list = set.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final list = set.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     return list;
   }
 
@@ -2153,7 +2357,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _preferredWorkspaceLabel() {
-    final all = [..._futureBookings, ..._pastBookings].where((b) => _isConfirmed(b['status'])).toList();
+    final all = [..._futureBookings, ..._pastBookings]
+        .where((b) => _isConfirmed(b['status']))
+        .toList();
     if (all.isEmpty) return 'Not enough data yet';
 
     final counts = <int, int>{};
@@ -2171,7 +2377,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _preferredTimeSlotLabel() {
-    final all = [..._futureBookings, ..._pastBookings].where((b) => _isConfirmed(b['status'])).toList();
+    final all = [..._futureBookings, ..._pastBookings]
+        .where((b) => _isConfirmed(b['status']))
+        .toList();
     if (all.isEmpty) return 'Not enough data yet';
 
     final counts = <String, int>{};
