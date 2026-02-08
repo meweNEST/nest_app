@@ -49,6 +49,10 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   /// workspace_id -> normalized position (0..1)
   Map<int, Offset> _posNormByWorkspaceId = {};
 
+  /// Cached membership flags (used to show correct options in meeting room sheet)
+  String? _membershipType;
+  String? _membershipStatus;
+
   @override
   void initState() {
     super.initState();
@@ -142,7 +146,6 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
 
   /// Returns true if blocked and we navigated away.
   Future<bool> _guardBeforeShowingMap() async {
-    // 1) entitlement / rules / pass-full-day enforcement
     try {
       final can = await _canUserBookCurrentSlot();
       final allowed = can['allowed'] == true;
@@ -153,11 +156,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
         Navigator.of(context).pop();
         return true;
       }
-    } catch (_) {
-      // If RPC fails, don’t block—DB constraints/RLS still protect inserts.
-    }
+    } catch (_) {}
 
-    // 2) overlap check (nice UX)
     try {
       final hasOverlap = await _userHasOverlapForCurrentSlot();
       if (hasOverlap) {
@@ -175,6 +175,70 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   }
 
   // ----------------------------
+  // Membership flags + safe enum mapping
+  // ----------------------------
+
+  Future<void> _loadMyMembershipFlags() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final row = await supabase
+          .from('users')
+          .select('membership_type,membership_status')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      _membershipType = (row?['membership_type'] ?? '').toString().trim().toLowerCase();
+      _membershipStatus = (row?['membership_status'] ?? '').toString().trim().toLowerCase();
+    } catch (_) {
+      _membershipType = null;
+      _membershipStatus = null;
+    }
+  }
+
+  UserMembership _enumByPreferredNames(List<String> preferred) {
+    final values = UserMembership.values;
+    for (final want in preferred) {
+      final w = want.trim().toLowerCase();
+      for (final v in values) {
+        final n = v.name.toLowerCase();
+        if (n == w) return v;
+      }
+    }
+    return values.first;
+  }
+
+  /// Keep the *old* meeting-room sheet UI, but pass the correct membership if the enum supports it.
+  UserMembership _membershipForMeetingRoomSheet() {
+    final status = (_membershipStatus ?? '').trim().toLowerCase();
+    final type = (_membershipType ?? '').trim().toLowerCase();
+
+    if (status != 'active') {
+      // Try to pass a restrictive value if it exists; otherwise fall back safely.
+      return _enumByPreferredNames(['none', 'guest', 'daypass', 'light', 'regular']);
+    }
+
+    if (type == 'full') {
+      return _enumByPreferredNames(['full', 'regular']);
+    }
+    if (type == 'part-time' || type == 'part_time') {
+      return _enumByPreferredNames(['parttime', 'part_time', 'partTime', 'regular']);
+    }
+    if (type == 'regular') {
+      return _enumByPreferredNames(['regular']);
+    }
+
+    return _enumByPreferredNames(['regular']);
+  }
+
+  bool get _isFullOrPartTimeActive {
+    final status = (_membershipStatus ?? '').trim().toLowerCase();
+    final type = (_membershipType ?? '').trim().toLowerCase();
+    return status == 'active' && (type == 'full' || type == 'part-time' || type == 'part_time');
+  }
+
+  // ----------------------------
   // Loading
   // ----------------------------
 
@@ -185,6 +249,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     });
 
     try {
+      await _loadMyMembershipFlags();
+
       final rows = await supabase
           .from('workspaces')
           .select('id,name,workspace_type,capacity,is_bookable,workspace_description')
@@ -320,29 +386,6 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     }
   }
 
-  Future<bool> _canBookMeetingRoomPrivate() async {
-    try {
-      final user = supabase.auth.currentUser;
-      if (user == null) return false;
-
-      final row = await supabase
-          .from('users')
-          .select('membership_type,membership_status')
-          .eq('id', user.id)
-          .maybeSingle();
-
-      if (row == null) return false;
-
-      final type = (row['membership_type'] ?? '').toString().trim().toLowerCase();
-      final status = (row['membership_status'] ?? '').toString().trim().toLowerCase();
-
-      if (status != 'active') return false;
-      return type == 'full' || type == 'regular';
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<void> _showBookingConfirmedDialog({
     required String workspaceName,
     required DateTime startLocal,
@@ -398,10 +441,8 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
   }
 
   Future<void> _handleSeatTap(_Workspace workspace) async {
-    // Lock selection to chosen category if set
     if (widget.selectedCategoryType != null && workspace.workspaceType != widget.selectedCategoryType) return;
 
-    // Re-check entitlement & overlap (race-safe)
     try {
       final can = await _canUserBookCurrentSlot();
       if (!mounted) return;
@@ -432,11 +473,10 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     final remaining = _remainingForWorkspace(workspace);
     final capacity = workspace.capacity <= 0 ? 1 : workspace.capacity;
 
-    // 1-seat desks: if booked, should not be tappable anyway
     if (!isMeetingRoom && capacity == 1 && remaining <= 0) return;
-
-    // meeting room private: blocked entirely
     if (isMeetingRoom && privateBooked) return;
+
+    await _loadSlotCounts();
 
     final range = _slotToRangeLocal(widget.selectedDate, widget.selectedTimeSlot);
 
@@ -444,18 +484,33 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
     if (isMeetingRoom) {
       final selection = await showModalBottomSheet<MeetingBookingType>(
         context: context,
-        builder: (ctx) => MeetingRoomSelectionSheet(currentUserMembership: UserMembership.regular),
+        builder: (ctx) => MeetingRoomSelectionSheet(
+          currentUserMembership: _membershipForMeetingRoomSheet(),
+        ),
       );
       if (selection == null) return;
       meetingType = selection;
 
       if (meetingType == MeetingBookingType.private) {
-        final allowed = await _canBookMeetingRoomPrivate();
-        if (!allowed) {
+        // membership gate
+        if (!_isFullOrPartTimeActive) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Private meeting room booking is only available for active Full or Regular members.'),
+              content: Text('Private meeting room booking is only available for active Full or Part-Time members.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        // NEW RULE: private only if 0 seats booked
+        final alreadyBookedSeats = _bookedCountByWorkspaceId[workspace.id] ?? 0;
+        if (alreadyBookedSeats > 0) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You can only book the meeting room privately if no seats are booked yet.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -621,12 +676,10 @@ class _WorkspaceMapScreenState extends State<WorkspaceMapScreen> {
                             final remaining = _remainingForWorkspace(w);
                             final capacity = w.capacity <= 0 ? 1 : w.capacity;
 
-                            // 1-seat desks: hide when booked
                             if (!isMeetingRoom && capacity == 1 && remaining <= 0) {
                               return const SizedBox.shrink();
                             }
 
-                            // Meeting rooms: hide when fully booked by capacity; keep private-booked visible but disabled
                             if (isMeetingRoom && remaining <= 0 && !privateBooked) {
                               return const SizedBox.shrink();
                             }

@@ -1,4 +1,7 @@
+// lib/features/cafe/cafe_screen.dart
+
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -179,22 +182,47 @@ class _CafeScreenState extends State<CafeScreen> {
 
   // ---------- HELPERS ----------
 
+  num? _num(dynamic v) => v is num ? v : null;
+
   List<String> _stringListFromAny(dynamic raw) {
     if (raw == null) return [];
     if (raw is List) {
       return raw.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
     }
     if (raw is String) {
-      return raw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      final s = raw.trim();
+      if (s.isEmpty || s == '0') return [];
+
+      // JSON array stored as text
+      if (s.startsWith('[') && s.endsWith(']')) {
+        try {
+          final decoded = jsonDecode(s);
+          if (decoded is List) {
+            return decoded.map((e) => e.toString().trim()).where((x) => x.isNotEmpty).toList();
+          }
+        } catch (_) {
+          // fall back
+        }
+      }
+
+      // fallback: comma separated
+      return s.split(',').map((x) => x.trim()).where((x) => x.isNotEmpty).toList();
     }
     return [];
   }
 
-  String _normalizeTag(String s) => s.trim().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_');
+  String _normalizeTag(String s) =>
+      s.trim().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_');
 
   String _canonicalAllergenKey(String key) {
     final k = _normalizeTag(key);
+
+    // common aliases -> canonical keys used in _allergenMeta
     if (k == 'wheat') return 'gluten';
+    if (k == 'egg') return 'eggs';
+    if (k == 'tree_nuts') return 'nuts';
+    if (k == 'shellfish') return 'crustaceans';
+
     return k;
   }
 
@@ -209,78 +237,56 @@ class _CafeScreenState extends State<CafeScreen> {
   }
 
   List<String> _effectiveAllergensForItem(Map<String, dynamic> item) {
-    final real = _parseAllergens(item['allergens']);
-    if (real.isNotEmpty) return real;
-
-    final id = (item['id'] as int?) ?? 0;
-
-    const pool = <String>[
-      'milk',
-      'eggs',
-      'gluten',
-      'nuts',
-      'soy',
-      'sulphites',
-    ];
-
-    final first = pool[id % pool.length];
-    final second = pool[(id * 3 + 1) % pool.length];
-
-    final set = <String>{
-      _canonicalAllergenKey(first),
-      _canonicalAllergenKey(second),
-    };
-    final list = set.where(_allergenMeta.containsKey).toList()..sort();
-    return list;
+    // ✅ Real allergens only (no fake/random fallback)
+    return _parseAllergens(item['allergens']);
   }
 
-  Map<String, num> _effectiveNutritionForItem(Map<String, dynamic> item) {
-    final calories = item['calories_kcal'];
-    final protein = item['protein_g'];
-    final carbs = item['carbs_g'];
-    final fat = item['fat_g'];
+  Map<String, num?> _effectiveNutritionForItem(Map<String, dynamic> item) {
+    // Prefer per-portion fields; fallback to legacy fields where appropriate.
+    final kcal = _num(item['energy_kcal_portion']) ?? _num(item['calories_kcal']);
+    final kj = _num(item['energy_kj_portion']);
 
-    bool hasAnyNum(dynamic v) => v is num;
-
-    if (hasAnyNum(calories) || hasAnyNum(protein) || hasAnyNum(carbs) || hasAnyNum(fat)) {
-      return {
-        'kcal': (calories is num) ? calories : 0,
-        'protein_g': (protein is num) ? protein : 0,
-        'carbs_g': (carbs is num) ? carbs : 0,
-        'fat_g': (fat is num) ? fat : 0,
-      };
-    }
-
-    final id = (item['id'] as int?) ?? 0;
-    final kcal = 60 + (id * 37) % 360;
-    final p = ((id * 3) % 15) + 1;
-    final c = ((id * 7) % 55) + 5;
-    final f = ((id * 5) % 20) + 1;
+    final fat = _num(item['fat_g_portion']) ?? _num(item['fat_g']);
+    final satFat = _num(item['sat_fat_g_portion']);
+    final carbs = _num(item['carbs_g_portion']) ?? _num(item['carbs_g']);
+    final sugars = _num(item['sugars_g_portion']);
+    final protein = _num(item['protein_g_portion']) ?? _num(item['protein_g']);
+    final salt = _num(item['salt_g_portion']);
+    final fiber = _num(item['fiber_g_portion']);
 
     return {
       'kcal': kcal,
-      'protein_g': p,
-      'carbs_g': c,
-      'fat_g': f,
+      'kj': kj,
+      'fat_g': fat,
+      'sat_fat_g': satFat,
+      'carbs_g': carbs,
+      'sugars_g': sugars,
+      'protein_g': protein,
+      'salt_g': salt,
+      'fiber_g': fiber,
     };
   }
 
   static const Map<String, Map<String, String>> _allergenMeta = {
+    // EU14 + a few safe aliases
     'milk': {'emoji': '🥛', 'label': 'Milk / Dairy'},
     'eggs': {'emoji': '🥚', 'label': 'Eggs'},
     'peanuts': {'emoji': '🥜', 'label': 'Peanuts'},
-    'tree_nuts': {'emoji': '🌰', 'label': 'Tree nuts'},
     'nuts': {'emoji': '🌰', 'label': 'Nuts'},
     'soy': {'emoji': '🌱', 'label': 'Soy'},
     'gluten': {'emoji': '🌾', 'label': 'Gluten / Wheat'},
     'sesame': {'emoji': '⚪', 'label': 'Sesame'},
     'fish': {'emoji': '🐟', 'label': 'Fish'},
-    'shellfish': {'emoji': '🦐', 'label': 'Shellfish / Crustaceans'},
+    'crustaceans': {'emoji': '🦐', 'label': 'Crustaceans'},
     'molluscs': {'emoji': '🦪', 'label': 'Molluscs'},
     'celery': {'emoji': '🥬', 'label': 'Celery'},
     'mustard': {'emoji': '🌭', 'label': 'Mustard'},
     'lupin': {'emoji': '🌼', 'label': 'Lupin'},
     'sulphites': {'emoji': '🍷', 'label': 'Sulphites'},
+
+    // legacy keys kept so older data doesn't break
+    'shellfish': {'emoji': '🦐', 'label': 'Shellfish / Crustaceans'},
+    'tree_nuts': {'emoji': '🌰', 'label': 'Tree nuts'},
   };
 
   void _showAllergenLegendSheet(List<String> allergensRaw) {
@@ -369,6 +375,36 @@ class _CafeScreenState extends State<CafeScreen> {
     final allergens = _effectiveAllergensForItem(item);
     final nutrition = _effectiveNutritionForItem(item);
 
+    // ✅ show ONLY the note when present
+    final allergensNote = (item['allergens_note'] ?? '').toString().trim();
+
+    final portionSize = (item['portion_size'] ?? '').toString().trim();
+
+    bool hasVal(String key) => nutrition[key] != null;
+
+    String fmt(num? v, {int decimals = 0}) {
+      if (v == null) return '—';
+      if (decimals == 0) return v.round().toString();
+
+      final d = v.toDouble();
+      final s = d.toStringAsFixed(decimals);
+
+      // remove trailing .0 / .00 etc
+      return s.replaceAll(RegExp(r'\.?0+)'), '');
+    }
+
+    final nutritionRows = <Widget>[
+      if (hasVal('kcal')) _nutritionRow('Calories', '${fmt(nutrition['kcal'])} kcal'),
+      if (hasVal('kj')) _nutritionRow('Energy', '${fmt(nutrition['kj'])} kJ'),
+      if (hasVal('protein_g')) _nutritionRow('Protein', '${fmt(nutrition['protein_g'], decimals: 1)} g'),
+      if (hasVal('carbs_g')) _nutritionRow('Carbs', '${fmt(nutrition['carbs_g'], decimals: 1)} g'),
+      if (hasVal('sugars_g')) _nutritionRow('Sugars', '${fmt(nutrition['sugars_g'], decimals: 1)} g'),
+      if (hasVal('fat_g')) _nutritionRow('Fat', '${fmt(nutrition['fat_g'], decimals: 1)} g'),
+      if (hasVal('sat_fat_g')) _nutritionRow('Saturated fat', '${fmt(nutrition['sat_fat_g'], decimals: 1)} g'),
+      if (hasVal('fiber_g')) _nutritionRow('Fiber', '${fmt(nutrition['fiber_g'], decimals: 1)} g'),
+      if (hasVal('salt_g')) _nutritionRow('Salt', '${fmt(nutrition['salt_g'], decimals: 2)} g'),
+    ];
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -410,7 +446,19 @@ class _CafeScreenState extends State<CafeScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        if (allergens.isEmpty)
+
+                        // ✅ Requirement: ONLY show the note if present
+                        if (allergensNote.isNotEmpty)
+                          Text(
+                            allergensNote,
+                            style: const TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontSize: 14,
+                              color: AppTheme.secondaryText,
+                              height: 1.35,
+                            ),
+                          )
+                        else if (allergens.isEmpty)
                           const Text(
                             'No allergen info available.',
                             style: TextStyle(
@@ -443,6 +491,7 @@ class _CafeScreenState extends State<CafeScreen> {
                               ),
                             );
                           }),
+
                         const SizedBox(height: 14),
                         const Text(
                           'Nutrition (approx.)',
@@ -453,11 +502,31 @@ class _CafeScreenState extends State<CafeScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        if (portionSize.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            'Per portion: $portionSize',
+                            style: const TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontSize: 13,
+                              color: AppTheme.secondaryText,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 10),
-                        _nutritionRow('Calories', '${nutrition['kcal']?.toInt() ?? 0} kcal'),
-                        _nutritionRow('Protein', '${nutrition['protein_g']?.toInt() ?? 0} g'),
-                        _nutritionRow('Carbs', '${nutrition['carbs_g']?.toInt() ?? 0} g'),
-                        _nutritionRow('Fat', '${nutrition['fat_g']?.toInt() ?? 0} g'),
+
+                        if (nutritionRows.isEmpty)
+                          const Text(
+                            'No nutrition info available.',
+                            style: TextStyle(
+                              fontFamily: 'CharlevoixPro',
+                              fontSize: 14,
+                              color: AppTheme.secondaryText,
+                            ),
+                          )
+                        else
+                          ...nutritionRows,
+
                         const SizedBox(height: 12),
                         const Text(
                           'If you have severe allergies, please ask our team.',
@@ -731,7 +800,6 @@ class _CafeScreenState extends State<CafeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ✅ unified responsive logo AppBar
       appBar: NestAppBar(
         actions: [
           IconButton(
@@ -1055,7 +1123,6 @@ class _CafeScreenState extends State<CafeScreen> {
 
   void _showCartModal(BuildContext context) {
     // unchanged from your version
-    // (keeping your existing implementation)
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
