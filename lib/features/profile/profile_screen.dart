@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/error_handler.dart';
 import '../../widgets/nest_app_bar.dart';
 import '../../widgets/nest_button.dart';
 import '../membership/membership_screen.dart';
@@ -248,6 +249,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _error = e.toString();
         _loading = false;
       });
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Failed to load profile data. Please try again.',
+      );
     }
   }
 
@@ -753,18 +759,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await supabase.from('users').update({'language': lang}).eq('id', user.id);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Language: ${lang == 'de' ? 'Deutsch' : 'English'}'),
-          backgroundColor: Colors.green,
-        ),
+      ErrorHandler.showSuccess(
+        context,
+        'Language: ${lang == 'de' ? 'Deutsch' : 'English'}',
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Could not update language: $e'),
-            backgroundColor: Colors.red),
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Could not update language',
       );
     }
   }
@@ -825,18 +829,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .update({'status': 'CANCELLED'}).eq('id', id);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Booking cancelled.'), backgroundColor: Colors.green),
-      );
+      ErrorHandler.showSuccess(context, 'Booking cancelled');
 
       await _loadAll();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Could not cancel booking: $e'),
-            backgroundColor: Colors.red),
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Could not cancel booking',
       );
     }
   }

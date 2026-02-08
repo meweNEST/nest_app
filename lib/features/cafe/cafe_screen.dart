@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nest_app/core/theme/app_theme.dart';
+import 'package:nest_app/core/utils/error_handler.dart';
 import 'package:nest_app/widgets/nest_app_bar.dart';
 import 'package:nest_app/widgets/nest_button.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -103,10 +104,14 @@ class _CafeScreenState extends State<CafeScreen> {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _updateCategoryArrows());
     } catch (e) {
-      // ignore: avoid_print
-      print('Error loading cafe data: $e');
+      debugPrint('Error loading cafe data: $e');
       if (!mounted) return;
       setState(() => _loading = false);
+      ErrorHandler.showError(
+        context,
+        e,
+        userMessage: 'Failed to load café menu. Please try again.',
+      );
     }
   }
 
@@ -217,8 +222,9 @@ class _CafeScreenState extends State<CafeScreen> {
                 .where((x) => x.isNotEmpty)
                 .toList();
           }
-        } catch (_) {
-          // fall back
+        } catch (e) {
+          debugPrint('Failed to parse dietary info JSON: $e');
+          // fall back to comma-separated parsing
         }
       }
 
