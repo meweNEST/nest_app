@@ -1,18 +1,7 @@
-// lib/features/schedule/schedule_screen.dart
-//
-// What’s new in this version:
-// - If the user’s entitlement is a PASS (Day Pass / Flexi-Pass), the time slot UI is restricted to **Full Day only**
-//   (as requested). We detect this via `can_user_book` RPC and its `entitlement` field.
-// - Booking entry points ("Select" and "View on map") use `can_user_book` to show a friendly reason immediately
-//   (house rules not accepted, no entitlement, pass requires Full Day, etc).
-// - ✅ Guest popup REMOVED from this screen (it now lives in MainScreen only)
-// - Still includes overlap pre-check and friendly overlap messaging.
-// - Keeps the rest of the UX changes you already had (Select button pink & above View on map, hide 0-seat categories,
-//   centered NEST logo + logout, etc.)
-
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nest_app/widgets/nest_button.dart';
 
 import 'package:nest_app/widgets/nest_app_bar.dart';
 import '../../core/theme/app_theme.dart';
@@ -22,6 +11,7 @@ import '../booking/screens/workspace_map_screen.dart';
 import '../booking/widgets/add_extras_bottom_sheet.dart';
 import '../booking/widgets/meeting_room_selection_sheet.dart';
 import '../membership/membership_screen.dart';
+import '../profile/profile_screen.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -33,7 +23,7 @@ class ScheduleScreen extends StatefulWidget {
 class _ScheduleScreenState extends State<ScheduleScreen> {
   final supabase = Supabase.instance.client;
 
-  final DateTime firstAvailableDate = DateTime(2026, 3, 16);
+  final DateTime firstAvailableDate = DateTime(2026, 3, 17);
   late DateTime selectedDate;
   String? selectedTimeSlot;
   String? selectedPreference;
@@ -52,14 +42,33 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   /// meeting rooms that have a PRIVATE booking in the selected slot
   Set<int> _privateBookedMeetingRoomIds = {};
 
-  final List<String> _allTimeSlots = const ['9-12', '12-15', '15-18', 'Full Day'];
+  final List<String> _allTimeSlots = const [
+    '9-12',
+    '12-15',
+    '15-18',
+    'Full Day'
+  ];
   final List<String> preferences = const ['Quiet Zone', 'Social Area'];
 
   static const Color _selectedChipPink = Color(0xFFF87CC8);
 
-  /// Derived from `can_user_book` (RPC). If `pass`, we restrict the UI to Full Day only.
-  String? _entitlement; // 'membership' | 'pass' | null
   bool _passOnlyFullDay = false;
+
+  /// Read from public.users (source of truth for house rules + membership type)
+  String? _membershipType; // e.g. 'full', 'regular', 'daypass', 'none'
+  String? _membershipStatus; // e.g. 'active'
+  bool _houseRulesAccepted = false;
+
+  static const int _dayPassMaxFullDays = 3;
+
+  // ---- Copied-style constants for the "already active" dialog (keep consistent) ----
+  static const Color _accentPink = Color(0xFFF87CC8);
+  static const Color _actionYellow = Color(0xFFFFDE59);
+  static const double _actionButtonHeight = 44;
+
+  // If you have these elsewhere, you can keep them the same here:
+  static const String _nestEmail = 'hello@nest.com';
+  static const String _nestPhone = '+49 000 000000';
 
   @override
   void initState() {
@@ -68,8 +77,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     _occupancyMap = HashMap();
     _loadWorkspaces();
 
-    // Entitlement is user-specific; update early.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadMyUserFlags();
       await _refreshEntitlementForSelectedDate();
     });
   }
@@ -80,22 +89,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Future<void> _confirmAndLogout() async {
     final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout?', style: TextStyle(fontFamily: 'SweetAndSalty')),
-        content: const Text('Are you sure you want to log out?', style: TextStyle(fontFamily: 'CharlevoixPro')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'CharlevoixPro')),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Logout?',
+                style: TextStyle(fontFamily: 'SweetAndSalty')),
+            content: const Text('Are you sure you want to log out?',
+                style: TextStyle(fontFamily: 'CharlevoixPro')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Logout',
+                    style: TextStyle(fontFamily: 'CharlevoixPro')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Logout', style: TextStyle(fontFamily: 'CharlevoixPro')),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!ok) return;
@@ -126,37 +139,150 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       DateTime(2026, 10, 31),
       DateTime(2026, 12, 25),
     ];
-    return holidays.any((h) => h.year == day.year && h.month == day.month && h.day == day.day);
+    return holidays.any(
+        (h) => h.year == day.year && h.month == day.month && h.day == day.day);
   }
 
   bool isDayEnabled(DateTime day) {
     final normalizedDay = _dayOnly(day);
     if (normalizedDay.isBefore(firstAvailableDate)) return false;
+
+    // Opening party
+    if (normalizedDay.year == 2026 &&
+        normalizedDay.month == 3 &&
+        normalizedDay.day == 16) {
+      return false;
+    }
+
     if (_isWeekend(day)) return false;
     if (_isHolidayInHamburg2026(day)) return false;
     return true;
   }
 
-  ({DateTime startLocal, DateTime endLocal}) _slotToRangeLocal(DateTime day, String slot) {
+  ({DateTime startLocal, DateTime endLocal}) _slotToRangeLocal(
+      DateTime day, String slot) {
     final d = _dayOnly(day);
     switch (slot) {
       case '9-12':
-        return (startLocal: DateTime(d.year, d.month, d.day, 9), endLocal: DateTime(d.year, d.month, d.day, 12));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 9),
+          endLocal: DateTime(d.year, d.month, d.day, 12)
+        );
       case '12-15':
-        return (startLocal: DateTime(d.year, d.month, d.day, 12), endLocal: DateTime(d.year, d.month, d.day, 15));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 12),
+          endLocal: DateTime(d.year, d.month, d.day, 15)
+        );
       case '15-18':
-        return (startLocal: DateTime(d.year, d.month, d.day, 15), endLocal: DateTime(d.year, d.month, d.day, 18));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 15),
+          endLocal: DateTime(d.year, d.month, d.day, 18)
+        );
       case 'Full Day':
       default:
-        return (startLocal: DateTime(d.year, d.month, d.day, 9), endLocal: DateTime(d.year, d.month, d.day, 18));
+        return (
+          startLocal: DateTime(d.year, d.month, d.day, 9),
+          endLocal: DateTime(d.year, d.month, d.day, 18)
+        );
     }
+  }
+
+  bool _isFullDayRange(DateTime startLocal, DateTime endLocal) {
+    return startLocal.year == endLocal.year &&
+        startLocal.month == endLocal.month &&
+        startLocal.day == endLocal.day &&
+        startLocal.hour == 9 &&
+        startLocal.minute == 0 &&
+        endLocal.hour == 18 &&
+        endLocal.minute == 0;
+  }
+
+  // ----------------------------
+  // Load user flags (house rules + membership)
+  // ----------------------------
+
+  Future<void> _loadMyUserFlags() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final row = await supabase
+          .from('users')
+          .select('membership_type,membership_status,house_rules_accepted')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (!mounted) return;
+
+      final type =
+          (row?['membership_type'] ?? '').toString().trim().toLowerCase();
+      final status =
+          (row?['membership_status'] ?? '').toString().trim().toLowerCase();
+      final accepted = (row?['house_rules_accepted'] == true);
+
+      setState(() {
+        _membershipType = type.isEmpty ? null : type;
+        _membershipStatus = status.isEmpty ? null : status;
+        _houseRulesAccepted = accepted;
+      });
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  bool get _isDayPassActive =>
+      (_membershipStatus ?? '').toLowerCase() == 'active' &&
+      (_membershipType ?? '').toLowerCase() == 'daypass';
+
+  /// Your “premium” rule for private meeting room bookings
+  bool get _isFullOrPartTimeActive {
+    final status = (_membershipStatus ?? '').toString().trim().toLowerCase();
+    final type = (_membershipType ?? '').toString().trim().toLowerCase();
+    return status == 'active' &&
+        (type == 'full' || type == 'part-time' || type == 'part_time');
+  }
+
+  // ----------------------------
+  // MeetingRoomSelectionSheet membership mapping
+  // ----------------------------
+
+  UserMembership _enumByPreferredNames(List<String> preferred) {
+    final values = UserMembership.values;
+    for (final want in preferred) {
+      final w = want.trim().toLowerCase();
+      for (final v in values) {
+        if (v.name.toLowerCase() == w) return v;
+      }
+    }
+    return values.first;
+  }
+
+  /// Fix: MeetingRoomSelectionSheet likely expects `premium` (not `full`) to enable "entire room".
+  UserMembership _membershipForMeetingRoomSheet() {
+    final status = (_membershipStatus ?? '').trim().toLowerCase();
+    final type = (_membershipType ?? '').trim().toLowerCase();
+
+    if (status != 'active') {
+      return _enumByPreferredNames(
+          ['none', 'guest', 'daypass', 'regular', 'premium', 'full']);
+    }
+
+    if (type == 'full' || type == 'part-time' || type == 'part_time') {
+      // Prefer premium first so the sheet enables “entire room” if it uses premium logic.
+      return _enumByPreferredNames(['premium', 'full', 'regular']);
+    }
+
+    if (type == 'regular') {
+      return _enumByPreferredNames(['regular']);
+    }
+
+    return _enumByPreferredNames(['regular']);
   }
 
   // ----------------------------
   // RPC: can_user_book
   // ----------------------------
 
-  /// Calls `can_user_book(p_start, p_end)` and normalizes return into a map.
   Future<Map<String, dynamic>> _canUserBookForRange({
     required DateTime startLocal,
     required DateTime endLocal,
@@ -170,60 +296,542 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     });
 
     if (res is Map) return Map<String, dynamic>.from(res);
-    if (res is List && res.isNotEmpty && res.first is Map) return Map<String, dynamic>.from(res.first as Map);
+    if (res is List && res.isNotEmpty && res.first is Map) {
+      return Map<String, dynamic>.from(res.first as Map);
+    }
     if (res is bool) return {'allowed': res};
     return {'allowed': false, 'reason': 'Please try again.'};
   }
 
   Future<Map<String, dynamic>> _canUserBookSelectedSlot() async {
     final slot = selectedTimeSlot;
-    if (slot == null) return {'allowed': false, 'reason': 'Please select a time slot first.'};
+    if (slot == null) {
+      return {'allowed': false, 'reason': 'Please select a time slot first.'};
+    }
 
     final range = _slotToRangeLocal(selectedDate, slot);
-    return _canUserBookForRange(startLocal: range.startLocal, endLocal: range.endLocal);
+    return _canUserBookForRange(
+        startLocal: range.startLocal, endLocal: range.endLocal);
   }
 
   Future<void> _refreshEntitlementForSelectedDate() async {
     final range = _slotToRangeLocal(selectedDate, 'Full Day');
 
     try {
-      final res = await _canUserBookForRange(startLocal: range.startLocal, endLocal: range.endLocal);
+      final res = await _canUserBookForRange(
+          startLocal: range.startLocal, endLocal: range.endLocal);
 
-      final entitlement = (res['entitlement'] ?? '').toString().trim().toLowerCase();
-      final passOnly = entitlement == 'pass';
+      final entitlement =
+          (res['entitlement'] ?? '').toString().trim().toLowerCase();
+      final passOnlyFromRpc = entitlement == 'pass';
 
       if (!mounted) return;
 
+      final passOnly = passOnlyFromRpc || _isDayPassActive;
+
       setState(() {
-        _entitlement = entitlement.isEmpty ? null : entitlement;
         _passOnlyFullDay = passOnly;
       });
 
-      if (passOnly) {
-        if (selectedTimeSlot != 'Full Day') {
-          setState(() => selectedTimeSlot = 'Full Day');
-          await _loadSlotCounts();
-        }
+      if (passOnly && selectedTimeSlot != 'Full Day') {
+        setState(() => selectedTimeSlot = 'Full Day');
+        await _loadSlotCounts();
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _entitlement = null;
-        _passOnlyFullDay = false;
+        _passOnlyFullDay = _isDayPassActive;
       });
     }
   }
 
+  // ----------------------------
+  // House rules dialog + navigation to Profile
+  // ----------------------------
+
+  static const String _houseRulesText = 'House Rules\n\n'
+      '• Be kind and respectful to all parents and children.\n'
+      '• Keep phone calls quiet and use headphones.\n'
+      '• Please clean up your workspace and any play area you used.\n'
+      '• Food and drinks only in designated areas.\n\n'
+      'To book a workspace, please accept the house rules in your Profile.';
+
+  Future<void> _showHouseRulesGateDialog() async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Please accept the house rules to book',
+                style: TextStyle(
+                  fontFamily: 'CharlevoixPro',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.darkText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 220),
+                child: SingleChildScrollView(
+                  child: const Text(
+                    _houseRulesText,
+                    style: TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      fontSize: 14,
+                      color: AppTheme.secondaryText,
+                      height: 1.35,
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(ctx).pop();
+                          if (!mounted) return;
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const ProfileScreen()),
+                          );
+                          await _loadMyUserFlags();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _actionYellow,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50)),
+                        ),
+                        child: const Text(
+                          'Open Profile',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.darkText,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Close',
+                      style: TextStyle(fontFamily: 'CharlevoixPro')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ----------------------------
+  // Day pass usage check (3 confirmed full-day bookings)
+  // ----------------------------
+
+  Future<int> _countConfirmedFullDayBookingsThisYear() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return 0;
+
+    final now = DateTime.now();
+    final startYear = DateTime(now.year, 1, 1).toUtc().toIso8601String();
+    final startNextYear =
+        DateTime(now.year + 1, 1, 1).toUtc().toIso8601String();
+
+    try {
+      final rows = await supabase
+          .from('bookings')
+          .select('start_time,end_time,status')
+          .eq('user_id', user.id)
+          .gte('start_time', startYear)
+          .lt('start_time', startNextYear);
+
+      int count = 0;
+      for (final r in (rows as List)) {
+        final map = r as Map<String, dynamic>;
+        final status = (map['status'] ?? '').toString().trim().toLowerCase();
+        if (status != 'confirmed') continue;
+
+        final startLocal =
+            DateTime.parse(map['start_time'] as String).toLocal();
+        final endLocal = DateTime.parse(map['end_time'] as String).toLocal();
+
+        if (_isFullDayRange(startLocal, endLocal)) count++;
+      }
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<void> _showDayPassLimitDialog() async {
+    await _showAlreadyActiveMembershipDialog(
+      me: {
+        'membership_type': _membershipType ?? 'daypass',
+        'membership_status': _membershipStatus ?? 'active',
+      },
+      overrideTitle: 'Day Pass',
+      overrideBody:
+          'You’ve already used all $_dayPassMaxFullDays Full Day bookings included in your Day Pass.\n\n'
+          'If you’d like to book more days, please get another pass or upgrade your membership.',
+    );
+  }
+
+  // ----------------------------
+  // Membership-style dialog (adapted from MembershipScreen)
+  // ----------------------------
+
+  String _prettyMembershipType(String raw) {
+    final t = raw.trim().toLowerCase();
+    switch (t) {
+      case 'full':
+        return 'Full';
+      case 'regular':
+        return 'Regular';
+      case 'part-time':
+      case 'part_time':
+        return 'Part-time';
+      case 'light':
+        return 'Light';
+      case 'daypass':
+      case 'day_pass':
+        return 'Day Pass';
+      default:
+        if (t.isEmpty) return '';
+        return t[0].toUpperCase() + t.substring(1);
+    }
+  }
+
+  ButtonStyle _pillOutlinedStyle() => OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+        side: BorderSide(color: Colors.black.withOpacity(0.18)),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      );
+
+  ButtonStyle _pillFilledStyle(Color bg) => ElevatedButton.styleFrom(
+        backgroundColor: bg,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      );
+
+  TextStyle _pillTextStyle({Color? color}) => TextStyle(
+        fontFamily: 'Montserrat',
+        fontWeight: FontWeight.w600,
+        color: color ?? AppTheme.darkText,
+      );
+
+  Future<void> _showAlreadyActiveMembershipDialog({
+    Map<String, dynamic>? me,
+    String? overrideTitle,
+    String? overrideBody,
+  }) async {
+    if (!mounted) return;
+
+    final type =
+        _prettyMembershipType((me?['membership_type'] ?? '').toString());
+    final status =
+        (me?['membership_status'] ?? '').toString().trim().toLowerCase();
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                overrideTitle ?? 'NEST Membership',
+                style: const TextStyle(
+                  fontFamily: 'SweetAndSalty',
+                  fontSize: 22,
+                  color: AppTheme.darkText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                overrideBody ?? 'You already have an active membership',
+                style: const TextStyle(
+                  fontFamily: 'CharlevoixPro',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.darkText,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              if (status == 'active' && type.isNotEmpty)
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      fontSize: 14,
+                      color: AppTheme.secondaryText,
+                      height: 1.3,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Current plan: '),
+                      TextSpan(
+                        text: type,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: _accentPink,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                const Text(
+                  'Your membership is currently active.',
+                  style: TextStyle(
+                    fontFamily: 'CharlevoixPro',
+                    fontSize: 14,
+                    color: AppTheme.secondaryText,
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              const SizedBox(height: 14),
+              const Text(
+                'Interested in another membership or an upgrade?\nWe’ll be happy to consult you on the best options.',
+                style: TextStyle(
+                  fontFamily: 'CharlevoixPro',
+                  fontSize: 14,
+                  color: AppTheme.secondaryText,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.black.withOpacity(0.08)),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                      color: Colors.black.withOpacity(0.06),
+                    )
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.email, size: 18, color: AppTheme.darkText),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _nestEmail,
+                            style: TextStyle(
+                                fontFamily: 'CharlevoixPro',
+                                color: AppTheme.darkText),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: const [
+                        Icon(Icons.phone, size: 18, color: AppTheme.darkText),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _nestPhone,
+                            style: TextStyle(
+                                fontFamily: 'CharlevoixPro',
+                                color: AppTheme.darkText),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: _actionButtonHeight,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (_) => const MembershipScreen()),
+                                );
+                              },
+                              style: _pillFilledStyle(_actionYellow),
+                              child:
+                                  Text('Memberships', style: _pillTextStyle()),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SizedBox(
+                            height: _actionButtonHeight,
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              style: _pillOutlinedStyle(),
+                              child: Text('Close', style: _pillTextStyle()),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: _actionButtonHeight,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const MembershipScreen()));
+                        },
+                        style: _pillOutlinedStyle(),
+                        child: Text('Open website', style: _pillTextStyle()),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Center(
+                child: SizedBox(
+                  width: 200,
+                  child: NestPrimaryButton(
+                    text: 'Close',
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ----------------------------
+  // Gatekeeper used by Select + View on map
+  // ----------------------------
+
+  Future<bool> _ensureCanEnterBookingFlow() async {
+    if (selectedTimeSlot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a time slot first.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+
+    await _loadMyUserFlags();
+
+    if (_houseRulesAccepted != true) {
+      await _showHouseRulesGateDialog();
+      return false;
+    }
+
+    if (_isDayPassActive && selectedTimeSlot != 'Full Day') {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Full Day only',
+              style: TextStyle(fontFamily: 'SweetAndSalty')),
+          content: const Text(
+            'Day Pass bookings are available for Full Day only.',
+            style: TextStyle(fontFamily: 'CharlevoixPro'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                setState(() => selectedTimeSlot = 'Full Day');
+              },
+              child: const Text('Select Full Day',
+                  style: TextStyle(fontFamily: 'CharlevoixPro')),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    if (_isDayPassActive && selectedTimeSlot == 'Full Day') {
+      final used = await _countConfirmedFullDayBookingsThisYear();
+      if (used >= _dayPassMaxFullDays) {
+        await _showDayPassLimitDialog();
+        return false;
+      }
+    }
+
+    try {
+      final can = await _canUserBookSelectedSlot();
+      if (!mounted) return false;
+
+      if (can['allowed'] != true) {
+        final reason = can['reason']?.toString() ?? '';
+
+        if (reason.toLowerCase().contains('house rule')) {
+          await _showHouseRulesGateDialog();
+          return false;
+        }
+
+        _showNeedsEntitlementSnack(reason);
+        return false;
+      }
+    } catch (_) {}
+
+    return true;
+  }
+
   void _showNeedsEntitlementSnack(String? reason) {
+    final text = (reason == null || reason.trim().isEmpty)
+        ? 'To book a space, please activate a membership or buy a pass.'
+        : reason.trim();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(reason ?? 'To book a space, please activate a membership or buy a pass.'),
+        content: Text(text),
         backgroundColor: Colors.red,
         action: SnackBarAction(
           label: 'Memberships',
           textColor: Colors.white,
           onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MembershipScreen()));
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MembershipScreen()));
           },
         ),
       ),
@@ -259,7 +867,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   void _showOverlapSnack() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('You already have a booking in this time slot. Please choose another slot.'),
+        content: Text(
+            'You already have a booking in this time slot. Please choose another slot.'),
         backgroundColor: Colors.red,
       ),
     );
@@ -286,11 +895,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     try {
       final rows = await supabase
           .from('workspaces')
-          .select('id,name,workspace_type,capacity,is_bookable,workspace_description')
+          .select(
+              'id,name,workspace_type,capacity,is_bookable,workspace_description')
           .eq('is_bookable', true)
           .order('id', ascending: true);
 
-      final list = (rows as List).map((r) => _Workspace.fromJson(r as Map<String, dynamic>)).toList();
+      final list = (rows as List)
+          .map((r) => _Workspace.fromJson(r as Map<String, dynamic>))
+          .toList();
 
       if (!mounted) return;
       setState(() {
@@ -316,8 +928,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final monthStart = DateTime(dayInMonth.year, dayInMonth.month, 1);
     final nextMonthStart = DateTime(dayInMonth.year, dayInMonth.month + 1, 1);
 
-    final totalCapacityPerDay =
-    _workspaces.fold<int>(0, (sum, w) => sum + (w.capacity <= 0 ? 1 : w.capacity)).clamp(1, 999999);
+    final totalCapacityPerDay = _workspaces
+        .fold<int>(0, (sum, w) => sum + (w.capacity <= 0 ? 1 : w.capacity))
+        .clamp(1, 999999);
 
     try {
       final rows = await supabase
@@ -336,7 +949,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
 
       final Map<DateTime, OccupancyStatus> newMap = HashMap();
-      for (var day = monthStart; day.isBefore(nextMonthStart); day = day.add(const Duration(days: 1))) {
+      for (var day = monthStart;
+          day.isBefore(nextMonthStart);
+          day = day.add(const Duration(days: 1))) {
         final d = _dayOnly(day);
 
         if (!isDayEnabled(d)) {
@@ -358,9 +973,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
       if (!mounted) return;
       setState(() => _occupancyMap = newMap);
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
   }
 
   Future<void> _loadSlotCounts() async {
@@ -385,7 +998,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       for (final r in (rows as List)) {
         final map = r as Map<String, dynamic>;
         final wid = (map['workspace_id'] as num).toInt();
-        final type = (map['meeting_booking_type'] ?? '').toString().trim().toLowerCase();
+        final type =
+            (map['meeting_booking_type'] ?? '').toString().trim().toLowerCase();
 
         counts[wid] = (counts[wid] ?? 0) + 1;
         if (type == 'private') privateRooms.add(wid);
@@ -409,7 +1023,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     if (pref == null) return all;
 
     if (pref == 'Quiet Zone') {
-      return all.where((w) => w.workspaceType == 'FOCUS_BOX' || w.workspaceType == 'MEETING_ROOM').toList();
+      return all
+          .where((w) =>
+              w.workspaceType == 'FOCUS_BOX' ||
+              w.workspaceType == 'MEETING_ROOM')
+          .toList();
     } else {
       return all.where((w) => w.workspaceType != 'FOCUS_BOX').toList();
     }
@@ -417,7 +1035,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   int _remainingForWorkspace(_Workspace w) {
     final isMeetingRoom = w.workspaceType == 'MEETING_ROOM';
-    final privateBooked = isMeetingRoom && _privateBookedMeetingRoomIds.contains(w.id);
+    final privateBooked =
+        isMeetingRoom && _privateBookedMeetingRoomIds.contains(w.id);
+
+    // Important: private booking removes ALL 4 seats from availability
     if (privateBooked) return 0;
 
     final booked = _bookedCountByWorkspaceId[w.id] ?? 0;
@@ -476,29 +1097,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       case 'STANDING_DESK':
         return const ['Stand & stretch', 'Quick sessions', 'Good posture'];
       case 'MEETING_ROOM':
-        return const ['Comfortable benches', 'Talk & collaborate', 'More privacy'];
+        return const [
+          'Comfortable benches',
+          'Talk & collaborate',
+          'More privacy'
+        ];
       case 'SHARED_DESK':
         return const ['Big shared table', 'Community vibe', 'Fast Wi‑Fi'];
       default:
         return const ['Fast Wi‑Fi', 'Power outlet', 'Comfortable seat'];
-    }
-  }
-
-  Future<bool> _canBookMeetingRoomPrivate() async {
-    try {
-      final user = supabase.auth.currentUser;
-      if (user == null) return false;
-
-      final row = await supabase.from('users').select('membership_type,membership_status').eq('id', user.id).maybeSingle();
-      if (row == null) return false;
-
-      final type = (row['membership_type'] ?? '').toString().trim().toLowerCase();
-      final status = (row['membership_status'] ?? '').toString().trim().toLowerCase();
-
-      if (status != 'active') return false;
-      return type == 'full' || type == 'regular';
-    } catch (_) {
-      return false;
     }
   }
 
@@ -517,12 +1124,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Booking confirmed!', style: TextStyle(fontFamily: 'SweetAndSalty')),
+        title: const Text('Booking confirmed!',
+            style: TextStyle(fontFamily: 'SweetAndSalty')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(workspaceName, style: const TextStyle(fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800)),
+            Text(workspaceName,
+                style: const TextStyle(
+                    fontFamily: 'CharlevoixPro', fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(date, style: const TextStyle(fontFamily: 'CharlevoixPro')),
             Text(time, style: const TextStyle(fontFamily: 'CharlevoixPro')),
@@ -531,7 +1141,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK', style: TextStyle(fontFamily: 'CharlevoixPro')),
+            child:
+                const Text('OK', style: TextStyle(fontFamily: 'CharlevoixPro')),
           )
         ],
       ),
@@ -545,18 +1156,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Future<void> _quickSelectAndBook(List<_Workspace> candidates) async {
     if (selectedTimeSlot == null) return;
 
-    try {
-      final can = await _canUserBookSelectedSlot();
-      if (!mounted) return;
-
-      if (can['allowed'] != true) {
-        _showNeedsEntitlementSnack(can['reason']?.toString());
-        return;
-      }
-    } catch (_) {}
+    final allowed = await _ensureCanEnterBookingFlow();
+    if (!allowed) return;
 
     try {
-      final hasOverlap = await _userHasOverlapForSlot(day: selectedDate, slot: selectedTimeSlot!);
+      final hasOverlap = await _userHasOverlapForSlot(
+          day: selectedDate, slot: selectedTimeSlot!);
       if (!mounted) return;
       if (hasOverlap) {
         _showOverlapSnack();
@@ -564,15 +1169,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
     } catch (_) {}
 
+    await _loadSlotCounts();
+
     final available = candidates.where((w) {
-      if (w.workspaceType == 'MEETING_ROOM' && _privateBookedMeetingRoomIds.contains(w.id)) return false;
+      if (w.workspaceType == 'MEETING_ROOM' &&
+          _privateBookedMeetingRoomIds.contains(w.id)) {
+        return false;
+      }
       return _remainingForWorkspace(w) > 0;
     }).toList();
 
     if (available.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No seats left in this category for the selected slot.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content:
+                Text('No seats left in this category for the selected slot.'),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -581,21 +1194,45 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final range = _slotToRangeLocal(selectedDate, selectedTimeSlot!);
 
     MeetingBookingType? meetingType;
+    String meetingChoiceLabel = '';
+
     if (chosen.workspaceType == 'MEETING_ROOM') {
+      // Make bottom sheet tall enough to show both options without scrolling (most devices)
       final selection = await showModalBottomSheet<MeetingBookingType>(
         context: context,
-        builder: (ctx) => MeetingRoomSelectionSheet(currentUserMembership: UserMembership.regular),
+        isScrollControlled: true,
+        builder: (ctx) => MeetingRoomSelectionSheet(
+          currentUserMembership: _membershipForMeetingRoomSheet(),
+        ),
       );
+
       if (selection == null) return;
       meetingType = selection;
 
+      meetingChoiceLabel = meetingType == MeetingBookingType.private
+          ? 'Entire room (Private)'
+          : 'Single seat (Shared)';
+
       if (meetingType == MeetingBookingType.private) {
-        final allowed = await _canBookMeetingRoomPrivate();
-        if (!allowed) {
+        if (!_isFullOrPartTimeActive) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Private meeting room booking is only available for active Full or Regular members.'),
+              content: Text(
+                  'Book Entire Room is only available for Premium members (Full or Part‑Time).'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        final alreadyBookedSeats = _bookedCountByWorkspaceId[chosen.id] ?? 0;
+        if (alreadyBookedSeats > 0) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'You can only book the meeting room privately if no seats are booked yet.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -604,12 +1241,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
     }
 
+    final displayName = chosen.workspaceType == 'MEETING_ROOM' &&
+            meetingChoiceLabel.isNotEmpty
+        ? '${chosen.name} ${_emojiForWorkspaceType(chosen.workspaceType)} • $meetingChoiceLabel'
+        : '${chosen.name} ${_emojiForWorkspaceType(chosen.workspaceType)}';
+
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddExtrasBottomSheet(
-        workspaceName: '${chosen.name} ${_emojiForWorkspaceType(chosen.workspaceType)}',
+        workspaceName:
+            displayName, // shows chosen shared/private in the overview
         workspaceSubline: chosen.description ?? '',
         workspaceBenefits: _benefitsForWorkspaceType(chosen.workspaceType),
         startLocal: range.startLocal,
@@ -622,7 +1265,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final user = supabase.auth.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in again.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Please log in again.'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -639,7 +1283,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       };
 
       if (chosen.workspaceType == 'MEETING_ROOM' && meetingType != null) {
-        payload['meeting_booking_type'] = meetingType == MeetingBookingType.private ? 'private' : 'shared';
+        payload['meeting_booking_type'] =
+            meetingType == MeetingBookingType.private ? 'private' : 'shared';
       }
 
       await supabase.from('bookings').insert(payload).select('id').single();
@@ -648,7 +1293,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       await _loadMonthOccupancy(selectedDate);
 
       await _showBookingConfirmedDialog(
-        workspaceName: chosen.name,
+        workspaceName: displayName, // also shows chosen shared/private here
         startLocal: range.startLocal,
         endLocal: range.endLocal,
       );
@@ -669,7 +1314,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // UI helpers
   // ----------------------------
 
-  List<String> get _visibleTimeSlots => _passOnlyFullDay ? const ['Full Day'] : _allTimeSlots;
+  List<String> get _visibleTimeSlots => (_passOnlyFullDay || _isDayPassActive)
+      ? const ['Full Day']
+      : _allTimeSlots;
 
   @override
   Widget build(BuildContext context) {
@@ -680,7 +1327,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       byType.putIfAbsent(w.workspaceType, () => []).add(w);
     }
 
-    final types = byType.keys.toList()..sort((a, b) => _categoryLabel(a).compareTo(_categoryLabel(b)));
+    final types = byType.keys.toList()
+      ..sort((a, b) => _categoryLabel(a).compareTo(_categoryLabel(b)));
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -697,12 +1345,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         top: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const SizedBox(height: 8),
             const Center(
               child: Text(
                 'Find your perfect spot!',
-                style: TextStyle(fontFamily: 'SweetAndSalty', fontSize: 28, color: AppTheme.darkText),
+                style: TextStyle(
+                    fontFamily: 'SweetAndSalty',
+                    fontSize: 28,
+                    color: AppTheme.darkText),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -710,14 +1362,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             const Center(
               child: Text(
                 'Book a workspace that fits your needs',
-                style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 14, color: AppTheme.secondaryText),
+                style: TextStyle(
+                    fontFamily: 'CharlevoixPro',
+                    fontSize: 14,
+                    color: AppTheme.secondaryText),
                 textAlign: TextAlign.center,
               ),
             ),
             const SizedBox(height: 24),
             const Text(
               "Choose your date",
-              style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+              style: TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkText,
+              ),
             ),
             const SizedBox(height: 16),
             CalendarWidget(
@@ -726,6 +1386,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 setState(() => selectedDate = date);
                 await _loadMonthOccupancy(date);
 
+                await _loadMyUserFlags();
                 await _refreshEntitlementForSelectedDate();
 
                 if (selectedTimeSlot != null) await _loadSlotCounts();
@@ -737,27 +1398,44 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             const SizedBox(height: 40),
             const Text(
               "Select Time Slot",
-              style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+              style: TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkText,
+              ),
             ),
             const SizedBox(height: 10),
-            if (_passOnlyFullDay)
+            if (_passOnlyFullDay || _isDayPassActive)
               const Padding(
                 padding: EdgeInsets.only(bottom: 10),
                 child: Text(
-                  'Passes can be used for Full Day bookings only.',
-                  style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 13, color: AppTheme.secondaryText),
+                  'Day Pass bookings can be used for Full Day bookings only.',
+                  style: TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      fontSize: 13,
+                      color: AppTheme.secondaryText),
                 ),
               ),
             _buildFilterChips(_visibleTimeSlots, selectedTimeSlot, (val) async {
-              if (_passOnlyFullDay && val != null && val != 'Full Day') return;
+              if ((_passOnlyFullDay || _isDayPassActive) &&
+                  val != null &&
+                  val != 'Full Day') {
+                return;
+              }
 
               setState(() => selectedTimeSlot = val);
               if (val != null) await _loadSlotCounts();
             }),
             const SizedBox(height: 40),
             const Text(
-              "Preferences",
-              style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+              "Preferences (optional)",
+              style: TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkText,
+              ),
             ),
             const SizedBox(height: 16),
             _buildFilterChips(preferences, selectedPreference, (val) {
@@ -767,7 +1445,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             const SizedBox(height: 40),
             const Text(
               "Available Workspaces",
-              style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+              style: TextStyle(
+                fontFamily: 'CharlevoixPro',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.darkText,
+              ),
             ),
             const SizedBox(height: 16),
             if (selectedTimeSlot == null)
@@ -775,221 +1458,262 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 padding: EdgeInsets.all(12),
                 child: Text(
                   "Please select a time slot to see available categories.",
-                  style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 14, color: AppTheme.secondaryText),
+                  style: TextStyle(
+                      fontFamily: 'CharlevoixPro',
+                      fontSize: 14,
+                      color: AppTheme.secondaryText),
                 ),
               )
             else if (_loadingWorkspaces)
-              const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+              const Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator()))
             else if (_workspacesError != null)
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(_workspacesError!, style: const TextStyle(fontFamily: 'CharlevoixPro', color: Colors.red)),
-                )
-              else
-                Builder(
-                  builder: (_) {
-                    final visibleTypes = types.where((type) {
-                      if (_loadingSlotCounts) return true;
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(_workspacesError!,
+                    style: const TextStyle(
+                        fontFamily: 'CharlevoixPro', color: Colors.red)),
+              )
+            else
+              Builder(
+                builder: (_) {
+                  final visibleTypes = types.where((type) {
+                    if (_loadingSlotCounts) return true;
+                    final seats = byType[type] ?? const [];
+                    return _remainingForCategory(seats) > 0;
+                  }).toList();
+
+                  if (!_loadingSlotCounts && visibleTypes.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        "No categories available for this time slot.",
+                        style: TextStyle(
+                            fontFamily: 'CharlevoixPro',
+                            fontSize: 14,
+                            color: AppTheme.secondaryText),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: visibleTypes.map((type) {
                       final seats = byType[type] ?? const [];
-                      return _remainingForCategory(seats) > 0;
-                    }).toList();
+                      final seatsLeft = _loadingSlotCounts
+                          ? null
+                          : _remainingForCategory(seats);
+                      final benefits =
+                          _benefitsForWorkspaceType(type).take(3).toList();
 
-                    if (!_loadingSlotCounts && visibleTypes.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Text(
-                          "No categories available for this time slot.",
-                          style: TextStyle(fontFamily: 'CharlevoixPro', fontSize: 14, color: AppTheme.secondaryText),
-                        ),
-                      );
-                    }
+                      final disabled = seatsLeft != null && seatsLeft <= 0;
 
-                    return Column(
-                      children: visibleTypes.map((type) {
-                        final seats = byType[type] ?? const [];
-                        final seatsLeft = _loadingSlotCounts ? null : _remainingForCategory(seats);
-                        final benefits = _benefitsForWorkspaceType(type).take(3).toList();
-
-                        final disabled = seatsLeft != null && seatsLeft <= 0;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.black.withOpacity(0.08)),
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                  color: Colors.black.withOpacity(0.06),
-                                )
-                              ],
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Text(
-                                      '${_categoryLabel(type)} ${_emojiForWorkspaceType(type)}',
-                                      style: const TextStyle(
-                                        fontFamily: 'CharlevoixPro',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppTheme.darkText,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      seatsLeft == null
-                                          ? 'Checking availability…'
-                                          : (seatsLeft == 1 ? '1 seat left' : '$seatsLeft seats left'),
-                                      style: const TextStyle(
-                                        fontFamily: 'CharlevoixPro',
-                                        fontSize: 13,
-                                        color: AppTheme.secondaryText,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    ...benefits.map(
-                                          (b) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 4),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('• ',
-                                                style: TextStyle(fontFamily: 'CharlevoixPro', color: AppTheme.darkText)),
-                                            Expanded(
-                                              child: Text(
-                                                b,
-                                                style: const TextStyle(
-                                                  fontFamily: 'CharlevoixPro',
-                                                  fontSize: 13,
-                                                  color: AppTheme.darkText,
-                                                  height: 1.25,
-                                                ),
-                                              ),
-                                            )
-                                          ],
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                                color: Colors.black.withOpacity(0.08)),
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                                color: Colors.black.withOpacity(0.06),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${_categoryLabel(type)} ${_emojiForWorkspaceType(type)}',
+                                        style: const TextStyle(
+                                          fontFamily: 'CharlevoixPro',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.darkText,
                                         ),
                                       ),
-                                    ),
-                                  ]),
-                                ),
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  width: 120,
-                                  child: Column(
-                                    children: [
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 44,
-                                        child: ElevatedButton(
-                                          onPressed: disabled ? null : () => _quickSelectAndBook(seats),
-                                          style: ButtonStyle(
-                                            backgroundColor: WidgetStateProperty.all(_selectedChipPink),
-                                            shape: WidgetStateProperty.all(
-                                              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Select',
-                                            style: TextStyle(
-                                              fontFamily: 'CharlevoixPro',
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white,
-                                            ),
-                                          ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        seatsLeft == null
+                                            ? 'Checking availability…'
+                                            : (seatsLeft == 1
+                                                ? '1 seat left'
+                                                : '$seatsLeft seats left'),
+                                        style: const TextStyle(
+                                          fontFamily: 'CharlevoixPro',
+                                          fontSize: 13,
+                                          color: AppTheme.secondaryText,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                       const SizedBox(height: 10),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 44,
-                                        child: OutlinedButton(
-                                          onPressed: disabled
-                                              ? null
-                                              : () async {
-                                            if (selectedTimeSlot == null) return;
-
-                                            try {
-                                              final can = await _canUserBookSelectedSlot();
-                                              if (!mounted) return;
-
-                                              if (can['allowed'] != true) {
-                                                _showNeedsEntitlementSnack(can['reason']?.toString());
-                                                return;
-                                              }
-                                            } catch (_) {}
-
-                                            try {
-                                              final hasOverlap = await _userHasOverlapForSlot(
-                                                day: selectedDate,
-                                                slot: selectedTimeSlot!,
-                                              );
-                                              if (!mounted) return;
-
-                                              if (hasOverlap) {
-                                                _showOverlapSnack();
-                                                return;
-                                              }
-                                            } catch (_) {}
-
-                                            await Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (_) => WorkspaceMapScreen(
-                                                  selectedDate: selectedDate,
-                                                  selectedTimeSlot: selectedTimeSlot!,
-                                                  selectedPreference: selectedPreference,
-                                                  selectedCategoryType: type,
+                                      ...benefits.map(
+                                        (b) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 4),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text('• ',
+                                                  style: TextStyle(
+                                                      fontFamily:
+                                                          'CharlevoixPro',
+                                                      color:
+                                                          AppTheme.darkText)),
+                                              Expanded(
+                                                child: Text(
+                                                  b,
+                                                  style: const TextStyle(
+                                                    fontFamily: 'CharlevoixPro',
+                                                    fontSize: 13,
+                                                    color: AppTheme.darkText,
+                                                    height: 1.25,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-
-                                            if (selectedTimeSlot != null) {
-                                              await _loadSlotCounts();
-                                              await _loadMonthOccupancy(selectedDate);
-                                            }
-                                          },
-                                          style: OutlinedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                            side: BorderSide(color: Colors.black.withOpacity(0.18)),
+                                              )
+                                            ],
                                           ),
-                                          child: const FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              'View on map',
-                                              style: TextStyle(
-                                                fontFamily: 'CharlevoixPro',
-                                                fontWeight: FontWeight.w800,
-                                                color: AppTheme.darkText,
-                                              ),
+                                        ),
+                                      ),
+                                    ]),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                width: 120,
+                                child: Column(
+                                  children: [
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 44,
+                                      child: ElevatedButton(
+                                        onPressed: disabled
+                                            ? null
+                                            : () => _quickSelectAndBook(seats),
+                                        style: ButtonStyle(
+                                          backgroundColor:
+                                              WidgetStateProperty.all(
+                                                  _selectedChipPink),
+                                          shape: WidgetStateProperty.all(
+                                            RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(24)),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Select',
+                                          style: TextStyle(
+                                            fontFamily: 'CharlevoixPro',
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 44,
+                                      child: OutlinedButton(
+                                        onPressed: disabled
+                                            ? null
+                                            : () async {
+                                                if (selectedTimeSlot == null) {
+                                                  return;
+                                                }
+
+                                                final allowed =
+                                                    await _ensureCanEnterBookingFlow();
+                                                if (!allowed) return;
+
+                                                try {
+                                                  final hasOverlap =
+                                                      await _userHasOverlapForSlot(
+                                                    day: selectedDate,
+                                                    slot: selectedTimeSlot!,
+                                                  );
+                                                  if (!mounted) return;
+
+                                                  if (hasOverlap) {
+                                                    _showOverlapSnack();
+                                                    return;
+                                                  }
+                                                } catch (_) {}
+
+                                                await Navigator.of(context)
+                                                    .push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        WorkspaceMapScreen(
+                                                      selectedDate:
+                                                          selectedDate,
+                                                      selectedTimeSlot:
+                                                          selectedTimeSlot!,
+                                                      selectedPreference:
+                                                          selectedPreference,
+                                                      selectedCategoryType:
+                                                          type,
+                                                    ),
+                                                  ),
+                                                );
+
+                                                if (selectedTimeSlot != null) {
+                                                  await _loadSlotCounts();
+                                                  await _loadMonthOccupancy(
+                                                      selectedDate);
+                                                }
+                                              },
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(24)),
+                                          side: BorderSide(
+                                              color: Colors.black
+                                                  .withOpacity(0.18)),
+                                        ),
+                                        child: const FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            'View on map',
+                                            style: TextStyle(
+                                              fontFamily: 'CharlevoixPro',
+                                              fontWeight: FontWeight.w800,
+                                              color: AppTheme.darkText,
                                             ),
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
           ]),
         ),
       ),
     );
   }
 
-  Widget _buildFilterChips(List<String> items, String? selectedItem, Function(String?) onSelected) {
+  Widget _buildFilterChips(
+      List<String> items, String? selectedItem, Function(String?) onSelected) {
     return Wrap(
       spacing: 10.0,
       runSpacing: 10.0,
@@ -1005,8 +1729,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             decoration: BoxDecoration(
               color: isSelected ? _selectedChipPink : Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isSelected ? _selectedChipPink : Colors.black.withOpacity(0.08)),
-              boxShadow: [BoxShadow(blurRadius: 8, offset: const Offset(0, 3), color: Colors.black.withOpacity(0.06))],
+              border: Border.all(
+                  color: isSelected
+                      ? _selectedChipPink
+                      : Colors.black.withOpacity(0.08)),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                  color: Colors.black.withOpacity(0.06),
+                )
+              ],
             ),
             child: Text(
               item,
